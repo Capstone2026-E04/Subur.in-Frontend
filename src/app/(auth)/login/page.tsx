@@ -10,7 +10,7 @@ export default function LoginPage() {
       <button
         id="btn-login-google"
         onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-        className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-5 py-2.5 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 transition-colors"
+        className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-5 py-2.5 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 transition-colors cursor-pointer"
       >
         <FcGoogle size={18} />
         Login dengan Google

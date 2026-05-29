@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Subur.in Frontend
 
-## Getting Started
+Aplikasi frontend client (web monitoring) untuk proyek **Subur.in** (Platform Monitoring & Rekomendasi Tanaman Pintar).
 
-First, run the development server:
+## Tech Stack
+
+- **Framework:** Next.js (App Router, Turbopack)
+- **UI & Styling:** Tailwind CSS v4 & React Icons
+- **Autentikasi:** NextAuth.js v5 (Google OAuth2 & Backend Session Sync)
+- **State Management:** Zustand
+- **Visualisasi Data:** Recharts
+- **HTTP Client:** Axios
+
+## Fitur Utama
+
+- **Dashboard Elegan & Responsif:** Monitoring data tanaman secara real-time dengan widget statistik yang reusable (StatCard, Sidebar, Topbar).
+- **Desain Organik Modern:** Menggunakan palet warna premium bertema alam (hijau botani, krem lembut `#FBF5DD`, dan font *Stack Sans Text*) dikonfigurasi langsung via Tailwind CSS v4 `@theme`.
+- **Integrasi Google Sign-In & Backend Session:** Sesi autentikasi aman yang sinkron secara langsung dengan JWT token dari backend.
+- **Port Pengembangan Dinamis:** Server pengembangan otomatis berjalan menyesuaikan nilai `PORT` di berkas `.env.local`.
+
+## Cara Menjalankan
+
+### 1. Instalasi Dependensi
+
+```bash
+npm install
+```
+
+### 2. Menjalankan Server Pengembangan
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+*Server otomatis mendeteksi konfigurasi `PORT` dari `.env.local` (default berjalan di port `5000`).*
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Menjalankan Pemeriksaan Kode (Linting)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+```
 
-## Learn More
+## Struktur Proyek & Reusability
 
-To learn more about Next.js, take a look at the following resources:
+Komponen halaman dashboard dibuat modular dan fleksibel:
+- **`src/components/dashboard/navConfig.ts`**: Cukup edit konfigurasi array di berkas ini untuk menambah menu/halaman baru pada Sidebar dan Topbar secara otomatis.
+- **`src/components/dashboard/Sidebar.tsx`**: Navigasi sidebar dinamis yang mendeteksi rute aktif.
+- **`src/components/dashboard/StatCard.tsx`**: Widget kartu indikator (kelembaban, suhu, jumlah tanaman) yang reusable.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Author
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Capstone2026-E04
