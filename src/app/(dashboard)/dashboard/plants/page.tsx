@@ -1,155 +1,242 @@
+"use client";
+
+import { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  MdAdd,
   MdOutlineSpa,
   MdWaterDrop,
-  MdThermostat,
-  MdInfoOutline,
+  MdRefresh,
+  MdOutlineScience,
+  MdOutlineInbox,
+  MdOutlineInfo,
 } from "react-icons/md";
+import { usePlants } from "@/hooks/usePlants";
 
-interface Plant {
-  id: number;
-  name: string;
-  species: string;
-  status: "Sehat" | "Perlu Air" | "Perhatian";
-  moisture: string;
-  temperature: string;
-  ageDays: number;
+function PlantSkeletonCard() {
+  return (
+    <div className="rounded-2xl bg-white border border-black/5 p-5 shadow-sm anismate-pulse flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-xl bg-gray-100 shrink-0" />
+        <div className="flex flex-col gap-1.5 flex-1">
+          <div className="h-4 w-2/3 rounded-md bg-gray-100" />
+          <div className="h-3 w-1/2 rounded-md bg-gray-100" />
+        </div>
+      </div>
+      <div className="h-16 w-full rounded-xl bg-gray-50" />
+      <div className="grid grid-cols-2 gap-3 pt-2">
+        <div className="h-14 rounded-xl bg-gray-50" />
+        <div className="h-14 rounded-xl bg-gray-50" />
+      </div>
+    </div>
+  );
 }
 
-const mockPlants: Plant[] = [
-  {
-    id: 1,
-    name: "Tomat Cherry Kebun A",
-    species: "Solanum lycopersicum",
-    status: "Sehat",
-    moisture: "72%",
-    temperature: "26°C",
-    ageDays: 24,
-  },
-  {
-    id: 2,
-    name: "Cabai Rawit Depan",
-    species: "Capsicum frutescens",
-    status: "Perlu Air",
-    moisture: "42%",
-    temperature: "28°C",
-    ageDays: 45,
-  },
-  {
-    id: 3,
-    name: "Bayam Hijau Bed 1",
-    species: "Amaranthus viridis",
-    status: "Sehat",
-    moisture: "68%",
-    temperature: "25°C",
-    ageDays: 14,
-  },
-  {
-    id: 4,
-    name: "Kangkung Air Hidro",
-    species: "Ipomoea aquatica",
-    status: "Perhatian",
-    moisture: "85%",
-    temperature: "29°C",
-    ageDays: 10,
-  },
-];
-
-const statusStyles = {
-  Sehat: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "Perlu Air": "bg-amber-50 text-amber-700 border-amber-200",
-  Perhatian: "bg-rose-50 text-rose-700 border-rose-200",
-};
+// ── Main Page ──────────────────────────────────────────────────────────────────
 
 export default function PlantsPage() {
+  const { plants, isLoading, error, loadPlants } = usePlants();
+
+  useEffect(() => {
+    loadPlants();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto w-full space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Daftar Tanaman</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Pantau perkembangan dan kondisi vitalitas tanaman Anda secara real-time.
+          <h2 className="text-lg font-bold text-primary">Katalog Tanaman</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {isLoading
+              ? "Memuat daftar tanaman…"
+              : `${plants.length} jenis tanaman didukung di Subur.in`}
           </p>
         </div>
-        <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-light transition-all shadow-sm shadow-primary/10 cursor-pointer">
-          <MdAdd size={20} />
-          Tambah Tanaman
+
+        <button
+          id="refresh-plants-btn"
+          onClick={loadPlants}
+          disabled={isLoading}
+          aria-label="Segarkan katalog tanaman"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-black/8 bg-white text-gray-500 hover:bg-gray-50 hover:text-primary disabled:opacity-50 transition-colors cursor-pointer shadow-sm"
+        >
+          <MdRefresh size={17} className={isLoading ? "animate-spin" : ""} />
         </button>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {mockPlants.map((plant) => (
-          <div
-            key={plant.id}
-            className="rounded-2xl bg-white border border-black/5 p-5 shadow-sm hover:shadow-md hover:border-black/10 transition-all duration-300 flex flex-col justify-between gap-4"
-          >
-            <div className="space-y-3">
-              {/* Header Card */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <MdOutlineSpa size={22} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800 text-sm sm:text-base leading-snug">
-                      {plant.name}
-                    </h3>
-                    <p className="text-xs text-gray-400 italic mt-0.5">
-                      {plant.species}
-                    </p>
-                  </div>
-                </div>
-                <span
-                  className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold shrink-0 ${
-                    statusStyles[plant.status]
-                  }`}
-                >
-                  {plant.status}
-                </span>
-              </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <div className="flex items-center gap-2.5 rounded-lg border border-black/5 bg-gray-50/55 px-3 py-2">
-                  <MdWaterDrop size={16} className="text-sky-500 shrink-0" />
-                  <div>
-                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
-                      Kelembaban
-                    </p>
-                    <p className="text-xs font-semibold text-gray-700">
-                      {plant.moisture}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2.5 rounded-lg border border-black/5 bg-gray-50/55 px-3 py-2">
-                  <MdThermostat size={16} className="text-orange-500 shrink-0" />
-                  <div>
-                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
-                      Suhu
-                    </p>
-                    <p className="text-xs font-semibold text-gray-700">
-                      {plant.temperature}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer Card */}
-            <div className="flex items-center justify-between border-t border-black/5 pt-3 mt-1 text-xs text-gray-400">
-              <span className="flex items-center gap-1">
-                <MdInfoOutline size={14} className="text-gray-400" />
-                Umur: <strong className="text-gray-600 font-semibold">{plant.ageDays} hari</strong>
-              </span>
-              <button className="text-xs font-medium text-primary hover:text-primary-light transition-colors cursor-pointer">
-                Lihat Detail →
-              </button>
-            </div>
+      {/* Info Banner */}
+      {!isLoading && plants.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-3 rounded-2xl border border-primary/10 bg-primary/5 p-4"
+        >
+          <MdOutlineInfo size={20} className="text-primary shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-primary">Informasi Parameter Ideal</p>
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Semua parameter pH dan kelembaban tanah di bawah ini telah ditetapkan secara ilmiah dan tidak dapat diubah. Parameter ini digunakan oleh alat pemantau Anda untuk memberikan rekomendasi penyiraman dan pemupukan yang paling akurat secara real-time.
+            </p>
           </div>
-        ))}
-      </div>
+        </motion.div>
+      )}
+
+      {/* Error Banner */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-3 rounded-xl bg-rose-50 border border-rose-200 px-4 py-3"
+          >
+            <MdOutlineInbox size={16} className="text-rose-500 shrink-0" />
+            <p className="text-sm text-rose-700">{error}</p>
+            <button
+              onClick={loadPlants}
+              className="ml-auto text-xs font-semibold text-rose-600 hover:underline cursor-pointer"
+            >
+              Coba Lagi
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Plants Grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <PlantSkeletonCard key={i} />
+          ))}
+        </div>
+      ) : plants.length === 0 && !error ? (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center gap-5 rounded-2xl border border-dashed border-black/12 bg-white/60 py-16 text-center"
+        >
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/8 text-primary">
+            <MdOutlineSpa size={32} />
+          </div>
+          <div>
+            <p className="text-base font-bold text-gray-700">Katalog Tanaman Kosong</p>
+            <p className="text-sm text-gray-400 mt-1.5 max-w-xs mx-auto leading-relaxed">
+              Tidak ditemukan data tanaman di database. Silakan jalankan seeder database pada backend Anda.
+            </p>
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div
+          layout
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+        >
+          <AnimatePresence mode="popLayout">
+            {plants.map((plant) => (
+              <motion.div
+                key={plant.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="group relative rounded-2xl bg-white border border-black/5 p-5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 flex flex-col justify-between gap-5 overflow-hidden"
+              >
+                {/* Visual Top Decorative Gradient */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/30 to-emerald-400/30 group-hover:from-primary group-hover:to-emerald-400 transition-all duration-300" />
+
+                <div className="space-y-4">
+                  {/* Header Card */}
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/8 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                      <MdOutlineSpa size={22} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-800 text-sm sm:text-base leading-snug group-hover:text-primary transition-colors">
+                        {plant.name}
+                      </h3>
+                      {plant.scientificName && (
+                        <p className="text-xs text-gray-400 italic mt-0.5">
+                          {plant.scientificName}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  {plant.description ? (
+                    <p className="text-xs text-gray-500 leading-relaxed font-normal bg-gray-50/50 rounded-xl p-3 border border-black/[0.02]">
+                      {plant.description}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic leading-relaxed font-normal bg-gray-50/50 rounded-xl p-3 border border-black/[0.02]">
+                      Tidak ada deskripsi untuk tanaman ini.
+                    </p>
+                  )}
+
+                  {/* Parameters Grid */}
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    {/* Kelembaban */}
+                    <div className="flex flex-col justify-between rounded-xl border border-black/5 bg-sky-50/20 px-3.5 py-3 gap-2">
+                      <div className="flex items-center gap-1.5 text-sky-600">
+                        <MdWaterDrop size={15} className="shrink-0" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                          Kelembaban
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700">
+                          {plant.minMoisture.toFixed(0)}% - {plant.maxMoisture.toFixed(0)}%
+                        </p>
+                        <p className="text-[9px] text-gray-400 font-medium mt-0.5">
+                          Kapasitas Ideal
+                        </p>
+                      </div>
+                      {/* Sub-visual progress indicator */}
+                      <div className="h-1.5 w-full bg-sky-100 rounded-full overflow-hidden mt-0.5">
+                        <div
+                          className="h-full bg-sky-400 rounded-full"
+                          style={{
+                            marginLeft: `${plant.minMoisture * 0.8}%`,
+                            width: `${(plant.maxMoisture - plant.minMoisture) * 0.8}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* pH Tanah */}
+                    <div className="flex flex-col justify-between rounded-xl border border-black/5 bg-amber-50/20 px-3.5 py-3 gap-2">
+                      <div className="flex items-center gap-1.5 text-amber-600">
+                        <MdOutlineScience size={15} className="shrink-0" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                          pH Tanah
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700">
+                          {plant.minPh.toFixed(1)} - {plant.maxPh.toFixed(1)}
+                        </p>
+                        <p className="text-[9px] text-gray-400 font-medium mt-0.5">
+                          Tingkat Keasaman
+                        </p>
+                      </div>
+                      {/* Sub-visual progress indicator (pH is typically 0 to 14, scale it accordingly) */}
+                      <div className="h-1.5 w-full bg-amber-100 rounded-full overflow-hidden mt-0.5">
+                        <div
+                          className="h-full bg-amber-400 rounded-full"
+                          style={{
+                            marginLeft: `${(plant.minPh / 14) * 100}%`,
+                            width: `${((plant.maxPh - plant.minPh) / 14) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      )}
     </div>
   );
 }
