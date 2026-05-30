@@ -184,21 +184,26 @@ export default function PlantsPage() {
                         </span>
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-gray-700">
+                        <p className="text-xs font-bold text-gray-700">
                           {plant.minMoisture.toFixed(0)}% - {plant.maxMoisture.toFixed(0)}%
                         </p>
-                        <p className="text-[9px] text-gray-400 font-medium mt-0.5">
-                          Kapasitas Ideal
+                        <p className="text-[9px] text-sky-700/80 font-bold mt-0.5">
+                          Target: {plant.targetMoisture.toFixed(0)}%
                         </p>
                       </div>
-                      {/* Sub-visual progress indicator */}
-                      <div className="h-1.5 w-full bg-sky-100 rounded-full overflow-hidden mt-0.5">
+                      {/* Sub-visual progress indicator with target marker */}
+                      <div className="h-1.5 w-full bg-sky-100/80 rounded-full relative mt-0.5 overflow-visible">
                         <div
                           className="h-full bg-sky-400 rounded-full"
                           style={{
                             marginLeft: `${plant.minMoisture * 0.8}%`,
                             width: `${(plant.maxMoisture - plant.minMoisture) * 0.8}%`,
                           }}
+                        />
+                        <div
+                          className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-sky-700 border-2 border-white shadow-md transition-all duration-300 group-hover:scale-125"
+                          style={{ left: `calc(${plant.targetMoisture * 0.8}% - 5px)` }}
+                          title={`Target Optimal Kelembaban: ${plant.targetMoisture}%`}
                         />
                       </div>
                     </div>
@@ -212,21 +217,26 @@ export default function PlantsPage() {
                         </span>
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-gray-700">
+                        <p className="text-xs font-bold text-gray-700">
                           {plant.minPh.toFixed(1)} - {plant.maxPh.toFixed(1)}
                         </p>
-                        <p className="text-[9px] text-gray-400 font-medium mt-0.5">
-                          Tingkat Keasaman
+                        <p className="text-[9px] text-amber-700/80 font-bold mt-0.5">
+                          Target: {plant.phTarget.toFixed(1)}
                         </p>
                       </div>
-                      {/* Sub-visual progress indicator (pH is typically 0 to 14, scale it accordingly) */}
-                      <div className="h-1.5 w-full bg-amber-100 rounded-full overflow-hidden mt-0.5">
+                      {/* Sub-visual progress indicator with target marker */}
+                      <div className="h-1.5 w-full bg-amber-100/80 rounded-full relative mt-0.5 overflow-visible">
                         <div
                           className="h-full bg-amber-400 rounded-full"
                           style={{
                             marginLeft: `${(plant.minPh / 14) * 100}%`,
                             width: `${((plant.maxPh - plant.minPh) / 14) * 100}%`,
                           }}
+                        />
+                        <div
+                          className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-amber-700 border-2 border-white shadow-md transition-all duration-300 group-hover:scale-125"
+                          style={{ left: `calc(${(plant.phTarget / 14) * 100}% - 5px)` }}
+                          title={`Target Optimal pH: ${plant.phTarget}`}
                         />
                       </div>
                     </div>

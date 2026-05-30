@@ -41,8 +41,10 @@ export interface Plant {
   description: string | null;
   minPh: number;
   maxPh: number;
+  phTarget: number;
   minMoisture: number;
   maxMoisture: number;
+  targetMoisture: number;
   createdAt: string;
   updatedAt: string;
 }
