@@ -5,7 +5,8 @@ import {
   MdSettings,
   MdNotifications,
   MdAccountCircle,
-  MdComputer
+  MdComputer,
+  MdAutoAwesome
 } from "react-icons/md";
 import { IconType } from "react-icons";
 
@@ -26,6 +27,11 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Perangkat",
     href: "/dashboard/devices",
     icon: MdComputer,
+  },
+  {
+    label: "Rekomendasi",
+    href: "/dashboard/recommendations",
+    icon: MdAutoAwesome,
   },
   {
     label: "Tanaman",

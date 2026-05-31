@@ -7,6 +7,7 @@ import type {
   UpdateDevicePayload,
   SensorHistoryItem,
   DeviceRecommendation,
+  RecommendationLogItem,
 } from "@/types/device";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
@@ -141,4 +142,17 @@ export async function fetchDeviceRecommendation(
   });
   const json = await handleResponse<{ success: boolean; data: DeviceRecommendation | null }>(res);
   return json.data ?? null;
+}
+
+export async function fetchRecommendationHistory(
+  token: string,
+  deviceId?: string
+): Promise<RecommendationLogItem[]> {
+  const query = deviceId ? `?deviceId=${deviceId}` : "";
+  const res = await fetch(`${API_BASE}/api/recommendations${query}`, {
+    headers: headers(token),
+    cache: "no-store",
+  });
+  const json = await handleResponse<{ success: boolean; data: { logs: RecommendationLogItem[] } }>(res);
+  return json.data?.logs ?? [];
 }

@@ -93,5 +93,28 @@ export interface DeviceRecommendation {
   timestamp?: string;
 }
 
+export interface RecommendationLogItem {
+  id: string;
+  deviceId: string;
+  phValue: number;
+  moistureValue: number;
+  fuzzyIndex: number;
+  categoryCode: string;
+  actionText: string;
+  waterVolumeLiter: number;
+  limeDosageGram: number;
+  sulfurDosageGram: number;
+  reduceWatering: boolean;
+  createdAt: string;
+  device?: {
+    id: string;
+    label: string;
+    plant?: {
+      name: string;
+      scientificName?: string;
+    } | null;
+  } | null;
+}
+
 
 

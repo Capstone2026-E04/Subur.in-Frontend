@@ -31,8 +31,6 @@ function PlantSkeletonCard() {
   );
 }
 
-// ── Main Page ──────────────────────────────────────────────────────────────────
-
 export default function PlantsPage() {
   const { plants, isLoading, error, loadPlants } = usePlants();
 
@@ -43,7 +41,6 @@ export default function PlantsPage() {
 
   return (
     <div className="max-w-4xl mx-auto w-full space-y-6">
-      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-primary">Katalog Tanaman</h2>
@@ -65,24 +62,7 @@ export default function PlantsPage() {
         </button>
       </div>
 
-      {/* Info Banner */}
-      {!isLoading && plants.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-start gap-3 rounded-2xl border border-primary/10 bg-primary/5 p-4"
-        >
-          <MdOutlineInfo size={20} className="text-primary shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-primary">Informasi Parameter Ideal</p>
-            <p className="text-xs text-gray-600 leading-relaxed">
-              Semua parameter pH dan kelembaban tanah di bawah ini telah ditetapkan secara ilmiah dan tidak dapat diubah. Parameter ini digunakan oleh alat pemantau Anda untuk memberikan rekomendasi penyiraman dan pemupukan yang paling akurat secara real-time.
-            </p>
-          </div>
-        </motion.div>
-      )}
 
-      {/* Error Banner */}
       <AnimatePresence>
         {error && (
           <motion.div
@@ -103,7 +83,6 @@ export default function PlantsPage() {
         )}
       </AnimatePresence>
 
-      {/* Plants Grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => (
