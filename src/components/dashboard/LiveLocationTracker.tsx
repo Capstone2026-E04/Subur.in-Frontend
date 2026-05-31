@@ -174,7 +174,7 @@ export default function LiveLocationTracker() {
   return (
     <div className="rounded-xl bg-white border border-black/5 shadow-sm p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-all duration-300">
       <div className="flex items-start gap-4">
-        <div className="h-12 w-12 rounded-xl bg-gradient-to-tr from-primary to-primary-light flex items-center justify-center shrink-0 shadow-md shadow-primary/10 text-white">
+        <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-md shadow-primary/10 text-white">
           <MdPlace size={24} />
         </div>
         <div className="space-y-1">

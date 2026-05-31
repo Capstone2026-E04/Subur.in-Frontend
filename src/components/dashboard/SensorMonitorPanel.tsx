@@ -93,8 +93,8 @@ function getMoistureClassification(m: number): string {
   if (m < 20) return "Sangat Kering";
   if (m < 30) return "Kering";
   if (m <= 60) return "Optimal";
-  if (m <= 70) return "Lembab";
-  return "Terlalu Lembab";
+  if (m <= 70) return "Lembap";
+  return "Terlalu Lembap";
 }
 
 // ── Connection Status Indicator ───────────────────────────────────────────────
@@ -149,14 +149,14 @@ function ConnectionBadge({ status }: { status: ConnectionStatus }) {
   );
 }
 
-// ── Main Panel ────────────────────────────────────────────────────────────────
-
 interface SensorMonitorPanelProps {
   deviceId?: string;
+  deviceLabel?: string;
 }
 
 export default function SensorMonitorPanel({
   deviceId = "node_1",
+  deviceLabel,
 }: SensorMonitorPanelProps) {
   const { ph, moisture, lastUpdated, connectionStatus } =
     useSensorRealtime(deviceId);
@@ -164,7 +164,7 @@ export default function SensorMonitorPanel({
   return (
     <div className="rounded-2xl bg-white border border-black/6 shadow-sm overflow-hidden">
       {/* Panel Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-black/6 bg-gradient-to-r from-primary/5 to-transparent">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-black/6 bg-gray-50">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
             <MdOutlineSpa size={20} className="text-primary" />
@@ -174,7 +174,7 @@ export default function SensorMonitorPanel({
               Monitor Sensor Real-time
             </h3>
             <p className="text-xs text-gray-400 font-medium">
-              Perangkat: <span className="font-semibold text-gray-600">{deviceId}</span>
+              Perangkat: <span className="font-semibold text-gray-600">{deviceLabel || deviceId}</span>
             </p>
           </div>
         </div>
@@ -198,7 +198,7 @@ export default function SensorMonitorPanel({
 
         {/* Moisture Card */}
         <SensorGaugeCard
-          label="Kelembaban Tanah"
+          label="Kelembapan Tanah"
           value={moisture}
           unit="% Moisture"
           min={0}

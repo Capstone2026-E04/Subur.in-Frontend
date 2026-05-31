@@ -42,40 +42,35 @@ export default function DeviceCard({
   onDelete,
 }: DeviceCardProps) {
   const isActive = device.status === "ACTIVE";
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.06, ease: "easeOut" }}
-      className="group relative flex flex-col rounded-2xl bg-white border border-black/6 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300"
+      className="group relative flex rounded-2xl bg-white border border-black/6 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300"
     >
-      {/* Top accent stripe */}
       <div
-        className={`h-1 w-full ${isActive ? "bg-gradient-to-r from-emerald-400 to-teal-500" : "bg-gradient-to-r from-gray-200 to-gray-300"}`}
+        className={`w-1.5 shrink-0 ${isActive ? "bg-emerald-500" : "bg-gray-200"}`}
       />
 
-      <div className="flex flex-col gap-4 p-5">
-        {/* Header Row */}
-        <div className="flex items-start justify-between gap-3">
-          {/* Icon + Label */}
-          <div className="flex items-center gap-3 min-w-0">
-            <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isActive ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-400"}`}
-            >
-              <MdOutlineDeviceHub size={20} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-gray-800 truncate leading-tight">
-                {device.label}
-              </p>
-              <p className="text-xs text-gray-400 font-mono mt-0.5 truncate">
-                {device.deviceId}
-              </p>
-            </div>
+      <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4 p-5">
+        <div className="flex items-center gap-3 min-w-0 md:max-w-xs shrink-0">
+          <div
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${isActive ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-400"}`}
+          >
+            <MdOutlineDeviceHub size={22} />
           </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-gray-800 truncate leading-tight">
+              {device.label}
+            </p>
+            <p className="text-xs text-gray-400 font-mono mt-1 truncate">
+              {device.deviceId}
+            </p>
+          </div>
+        </div>
 
-          {/* Status badge */}
+        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
           <div
             className={`flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold ${
               isActive
@@ -86,10 +81,7 @@ export default function DeviceCard({
             <MdCircle size={7} className={isActive ? "text-emerald-500 animate-pulse" : "text-gray-400"} />
             {isActive ? "Aktif" : "Tidak Aktif"}
           </div>
-        </div>
 
-        {/* Info pills */}
-        <div className="flex flex-wrap gap-2">
           {device.plant && (
             <div className="flex items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 py-1.5">
               <MdOutlineSpa size={13} className="text-primary shrink-0" />
@@ -107,19 +99,23 @@ export default function DeviceCard({
               </span>
             </div>
           )}
+          {device.sensorInterval !== undefined && (
+            <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 border border-amber-200/40">
+              <MdAccessTime size={13} className="text-amber-600 shrink-0" />
+              <span className="text-xs font-medium text-amber-700 truncate">
+                Tiap {device.sensorInterval} mnt
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-black/5" />
-
-        {/* Footer Row */}
-        <div className="flex items-center justify-between gap-2">
+        {/* Right Section: Last Seen & Action Buttons */}
+        <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-start sm:items-center md:items-end lg:items-center justify-between md:justify-end gap-3 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-black/5">
           <div className="flex items-center gap-1.5 text-xs text-gray-400">
             <MdAccessTime size={13} className="shrink-0" />
             <span>{formatRelativeTime(device.lastSeenAt)}</span>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex items-center gap-1">
             <button
               id={`edit-device-${device.id}`}

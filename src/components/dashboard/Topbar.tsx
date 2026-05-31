@@ -1,8 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { MdPerson } from "react-icons/md";
+import { MdPerson, MdNotifications } from "react-icons/md";
 import Link from "next/link";
+import { useEffect, useState, useCallback } from "react";
+import { useDevices } from "@/hooks/useDevices";
+import { fetchNotifications } from "@/services/notificationService";
 
 interface TopbarProps {
   user?: {
@@ -14,6 +17,8 @@ interface TopbarProps {
 
 const labelMap: Record<string, string> = {
   dashboard: "Dashboard",
+  devices: "Perangkat",
+  recommendations: "Rekomendasi",
   plants: "Tanaman",
   analytics: "Analitik",
   notifications: "Notifikasi",
@@ -23,6 +28,50 @@ const labelMap: Record<string, string> = {
 
 export default function Topbar({ user }: TopbarProps) {
   const pathname = usePathname();
+  const { devices, token } = useDevices();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const loadUnreadCount = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await fetchNotifications(token);
+      const unread = data.filter((n) => !n.isRead).length;
+      setUnreadCount(unread);
+    } catch (err) {
+      console.error("Gagal memuat jumlah notifikasi:", err);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    loadUnreadCount();
+  }, [loadUnreadCount]);
+
+  // Sync real-time count dari telemetri SSE
+  useEffect(() => {
+    if (devices.length === 0 || !token) return;
+
+    const streams = devices.map((device) => {
+      const es = new EventSource(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/sensors/${device.id}/stream`
+      );
+      es.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload?.notification) {
+            loadUnreadCount();
+          }
+        } catch (e) {
+          // ignore
+        }
+      };
+      return es;
+    });
+
+    return () => {
+      streams.forEach((es) => es.close());
+    };
+  }, [devices, token, loadUnreadCount]);
+
   const segments = pathname.split("/").filter(Boolean);
 
   const breadcrumbs = segments.map((segment, index) => {
@@ -60,6 +109,20 @@ export default function Topbar({ user }: TopbarProps) {
         <span className="text-sm sm:text-md font-semibold text-gray-700">
           Halo, {user?.name || "Pengguna"}
         </span>
+
+        {/* Notification Bell */}
+        <Link
+          href="/dashboard/notifications"
+          aria-label="Notifikasi"
+          className="relative h-9 w-9 flex items-center justify-center rounded-xl border border-black/5 bg-white text-gray-500 hover:text-primary hover:shadow-sm hover:border-black/10 transition-all shrink-0 mr-1 cursor-pointer"
+        >
+          <MdNotifications size={20} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-black text-white ring-2 ring-white animate-pulse">
+              {unreadCount}
+            </span>
+          )}
+        </Link>
 
         {/* Profile Avatar */}
         <Link

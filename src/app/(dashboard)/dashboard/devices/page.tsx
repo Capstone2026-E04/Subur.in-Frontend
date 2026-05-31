@@ -43,8 +43,6 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-// ── Skeleton Card ──────────────────────────────────────────────────────────────
-
 function SkeletonCard() {
   return (
     <div className="rounded-2xl bg-white border border-black/6 shadow-sm overflow-hidden">
@@ -74,27 +72,22 @@ function SkeletonCard() {
   );
 }
 
-// ── Main Page ──────────────────────────────────────────────────────────────────
-
 export default function DevicesPage() {
   const { devices, isLoading, error, token, loadDevices, claim, update, remove } =
     useDevices();
 
-  // Modal / dialog state
   const [isConnectOpen, setIsConnectOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<RegisteredDevice | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RegisteredDevice | null>(null);
 
   useEffect(() => {
     loadDevices();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadDevices]);
 
   const activeCount = devices.filter((d) => d.status === "ACTIVE").length;
 
   return (
     <div className="max-w-4xl mx-auto w-full space-y-6">
-      {/* Page Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-primary">Manajemen Alat</h2>
@@ -106,7 +99,6 @@ export default function DevicesPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Refresh */}
           <button
             id="refresh-devices-btn"
             onClick={loadDevices}
@@ -117,7 +109,6 @@ export default function DevicesPage() {
             <MdRefresh size={17} className={isLoading ? "animate-spin" : ""} />
           </button>
 
-          {/* Connect Button */}
           <button
             id="open-connect-modal-btn"
             onClick={() => setIsConnectOpen(true)}
@@ -130,7 +121,6 @@ export default function DevicesPage() {
         </div>
       </div>
 
-      {/* Summary Stat Bar */}
       {!isLoading && devices.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
@@ -152,7 +142,6 @@ export default function DevicesPage() {
         </motion.div>
       )}
 
-      {/* Error banner */}
       <AnimatePresence>
         {error && (
           <motion.div
@@ -173,9 +162,8 @@ export default function DevicesPage() {
         )}
       </AnimatePresence>
 
-      {/* Device Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {[...Array(3)].map((_, i) => (
             <SkeletonCard key={i} />
           ))}
@@ -185,7 +173,7 @@ export default function DevicesPage() {
       ) : (
         <motion.div
           layout
-          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+          className="grid grid-cols-1 gap-4"
         >
           <AnimatePresence mode="popLayout">
             {devices.map((device, idx) => (
@@ -201,7 +189,6 @@ export default function DevicesPage() {
         </motion.div>
       )}
 
-      {/* ── Modals ─────────────────────────────────────────────────────────── */}
       <ConnectDeviceModal
         isOpen={isConnectOpen}
         token={token}

@@ -24,6 +24,7 @@ import type { SensorHistoryItem } from "@/types/device";
 interface SensorHistoryChartProps {
   deviceId: string;
   token: string;
+  simple?: boolean;
 }
 
 type ChartViewMode = "both" | "ph" | "moisture";
@@ -82,11 +83,12 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 export default function SensorHistoryChart({
   deviceId,
   token,
+  simple = false,
 }: SensorHistoryChartProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [history, setHistory] = useState<SensorHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [limit, setLimit] = useState(20);
+  const [limit, setLimit] = useState(simple ? 15 : 20);
   const [viewMode, setViewMode] = useState<ChartViewMode>("both");
   const [error, setError] = useState<string | null>(null);
 
@@ -96,7 +98,11 @@ export default function SensorHistoryChart({
     setError(null);
     try {
       const data = await fetchSensorHistory(token, deviceId, limit);
-      setHistory(data);
+      // Sort history data chronologically ascending (oldest on left, newest on right)
+      const sorted = [...data].sort(
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+      setHistory(sorted);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Gagal memuat riwayat sensor."
@@ -132,7 +138,7 @@ export default function SensorHistoryChart({
   return (
     <div className="rounded-2xl bg-white border border-black/6 shadow-sm overflow-hidden flex flex-col">
       {/* Chart Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-b border-black/6 bg-gradient-to-r from-primary/5 to-transparent shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 border-b border-black/6 bg-gray-50 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
             <MdOutlineTimeline size={20} className="text-primary" />
@@ -148,62 +154,64 @@ export default function SensorHistoryChart({
         </div>
 
         {/* Header Controls */}
-        <div className="flex items-center gap-2">
-          {/* Mode Toggles */}
-          <div className="flex rounded-xl bg-gray-100 p-0.5 border border-black/5 text-xs font-semibold">
-            {[
-              { id: "both", label: "Semua", Icon: MdCompare },
-              { id: "ph", label: "pH", Icon: MdOutlineSpa },
-              { id: "moisture", label: "Kelembaban", Icon: MdOutlineWaterDrop },
-            ].map((m) => {
-              const Icon = m.Icon;
-              const isActive = viewMode === m.id;
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setViewMode(m.id as ChartViewMode)}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition cursor-pointer ${
-                    isActive
-                      ? "bg-white text-primary shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  <Icon size={13} />
-                  <span>{m.label}</span>
-                </button>
-              );
-            })}
+        {!simple && (
+          <div className="flex items-center gap-2">
+            {/* Mode Toggles */}
+            <div className="flex rounded-xl bg-gray-100 p-0.5 border border-black/5 text-xs font-semibold">
+              {[
+                { id: "both", label: "Semua", Icon: MdCompare },
+                { id: "ph", label: "pH", Icon: MdOutlineSpa },
+                { id: "moisture", label: "Kelembapan", Icon: MdOutlineWaterDrop },
+              ].map((m) => {
+                const Icon = m.Icon;
+                const isActive = viewMode === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setViewMode(m.id as ChartViewMode)}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                      isActive
+                        ? "bg-white text-primary shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    <Icon size={13} />
+                    <span>{m.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Limit Selector */}
+            <select
+              id="chart-limit-select"
+              value={limit}
+              onChange={(e) => setLimit(Number(e.target.value))}
+              className="rounded-xl border border-black/10 bg-white px-2 py-1.5 text-xs font-semibold text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer shadow-sm"
+            >
+              <option value={10}>10 data</option>
+              <option value={20}>20 data</option>
+              <option value={30}>30 data</option>
+              <option value={50}>50 data</option>
+            </select>
+
+            {/* Refresh Button */}
+            <button
+              id="refresh-chart-btn"
+              onClick={loadHistory}
+              disabled={isLoading}
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-black/8 bg-white text-gray-500 hover:bg-gray-50 hover:text-primary disabled:opacity-50 transition shadow-sm cursor-pointer"
+              aria-label="Segarkan riwayat sensor"
+            >
+              <MdRefresh size={16} className={isLoading ? "animate-spin" : ""} />
+            </button>
           </div>
-
-          {/* Limit Selector */}
-          <select
-            id="chart-limit-select"
-            value={limit}
-            onChange={(e) => setLimit(Number(e.target.value))}
-            className="rounded-xl border border-black/10 bg-white px-2 py-1.5 text-xs font-semibold text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer shadow-sm"
-          >
-            <option value={10}>10 data</option>
-            <option value={20}>20 data</option>
-            <option value={30}>30 data</option>
-            <option value={50}>50 data</option>
-          </select>
-
-          {/* Refresh Button */}
-          <button
-            id="refresh-chart-btn"
-            onClick={loadHistory}
-            disabled={isLoading}
-            className="flex h-8 w-8 items-center justify-center rounded-xl border border-black/8 bg-white text-gray-500 hover:bg-gray-50 hover:text-primary disabled:opacity-50 transition shadow-sm cursor-pointer"
-            aria-label="Segarkan riwayat sensor"
-          >
-            <MdRefresh size={16} className={isLoading ? "animate-spin" : ""} />
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Chart Canvas */}
-      <div className="flex-1 p-5 min-h-[320px] relative">
+      <div className={`flex-1 p-5 ${simple ? "min-h-[220px]" : "min-h-[320px]"} relative`}>
         {isLoading && history.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10 animate-pulse">
             <p className="text-sm font-semibold text-gray-500">Memuat riwayat...</p>
@@ -230,7 +238,7 @@ export default function SensorHistoryChart({
         ) : null}
 
         {history.length > 0 && (
-          <div className="w-full h-[300px]">
+          <div className={simple ? "w-full h-[180px]" : "w-full h-[300px]"}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={formattedData}
@@ -311,7 +319,7 @@ export default function SensorHistoryChart({
                     yAxisId="moisture-axis"
                     type="monotone"
                     dataKey="moisture"
-                    name="Kelembaban"
+                    name="Kelembapan"
                     stroke="#0284c7"
                     strokeWidth={2.5}
                     dot={false}

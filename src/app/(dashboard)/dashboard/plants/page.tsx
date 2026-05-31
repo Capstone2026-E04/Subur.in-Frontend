@@ -14,18 +14,18 @@ import { usePlants } from "@/hooks/usePlants";
 
 function PlantSkeletonCard() {
   return (
-    <div className="rounded-2xl bg-white border border-black/5 p-5 shadow-sm anismate-pulse flex flex-col gap-4">
-      <div className="flex items-center gap-3">
+    <div className="rounded-2xl bg-white border border-black/5 p-5 shadow-sm animate-pulse flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="flex items-center gap-3 shrink-0">
         <div className="h-10 w-10 rounded-xl bg-gray-100 shrink-0" />
-        <div className="flex flex-col gap-1.5 flex-1">
-          <div className="h-4 w-2/3 rounded-md bg-gray-100" />
-          <div className="h-3 w-1/2 rounded-md bg-gray-100" />
+        <div className="flex flex-col gap-1.5 w-32">
+          <div className="h-4 rounded bg-gray-100 w-full" />
+          <div className="h-3 rounded bg-gray-100 w-2/3" />
         </div>
       </div>
-      <div className="h-16 w-full rounded-xl bg-gray-50" />
-      <div className="grid grid-cols-2 gap-3 pt-2">
-        <div className="h-14 rounded-xl bg-gray-50" />
-        <div className="h-14 rounded-xl bg-gray-50" />
+      <div className="flex-1 h-8 rounded bg-gray-55 max-w-md w-full" />
+      <div className="flex gap-3 shrink-0">
+        <div className="h-12 w-24 rounded-xl bg-gray-50" />
+        <div className="h-12 w-24 rounded-xl bg-gray-50" />
       </div>
     </div>
   );
@@ -36,8 +36,7 @@ export default function PlantsPage() {
 
   useEffect(() => {
     loadPlants();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadPlants]);
 
   return (
     <div className="max-w-4xl mx-auto w-full space-y-6">
@@ -84,7 +83,7 @@ export default function PlantsPage() {
       </AnimatePresence>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {[...Array(4)].map((_, i) => (
             <PlantSkeletonCard key={i} />
           ))}
@@ -108,7 +107,7 @@ export default function PlantsPage() {
       ) : (
         <motion.div
           layout
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          className="grid grid-cols-1 gap-4"
         >
           <AnimatePresence mode="popLayout">
             {plants.map((plant) => (
@@ -118,106 +117,68 @@ export default function PlantsPage() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="group relative rounded-2xl bg-white border border-black/5 p-5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 flex flex-col justify-between gap-5 overflow-hidden"
+                className="group relative flex rounded-2xl bg-white border border-black/6 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300"
               >
-                {/* Visual Top Decorative Gradient */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/30 to-emerald-400/30 group-hover:from-primary group-hover:to-emerald-400 transition-all duration-300" />
+                {/* Left accent bar matching DeviceCard */}
+                <div className="w-1.5 shrink-0 bg-primary/40 group-hover:bg-primary transition-all duration-300" />
 
-                <div className="space-y-4">
-                  {/* Header Card */}
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-primary/8 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4 p-5">
+                  {/* Left Section: Icon and names */}
+                  <div className="flex items-center gap-3 min-w-0 md:max-w-xs shrink-0">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
                       <MdOutlineSpa size={22} />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-800 text-sm sm:text-base leading-snug group-hover:text-primary transition-colors">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-800 truncate leading-tight group-hover:text-primary transition-colors">
                         {plant.name}
-                      </h3>
+                      </p>
                       {plant.scientificName && (
-                        <p className="text-xs text-gray-400 italic mt-0.5">
+                        <p className="text-xs text-gray-400 italic mt-1 truncate">
                           {plant.scientificName}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  {/* Description */}
-                  {plant.description ? (
-                    <p className="text-xs text-gray-500 leading-relaxed font-normal bg-gray-50/50 rounded-xl p-3 border border-black/[0.02]">
-                      {plant.description}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-400 italic leading-relaxed font-normal bg-gray-50/50 rounded-xl p-3 border border-black/[0.02]">
-                      Tidak ada deskripsi untuk tanaman ini.
-                    </p>
-                  )}
+                  {/* Middle Section: Description */}
+                  <div className="flex-1 min-w-0">
+                    {plant.description ? (
+                      <p className="text-xs text-gray-500 leading-relaxed font-normal md:line-clamp-2">
+                        {plant.description}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic leading-relaxed">
+                        Tidak ada deskripsi untuk tanaman ini.
+                      </p>
+                    )}
+                  </div>
 
-                  {/* Parameters Grid */}
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    {/* Kelembaban */}
-                    <div className="flex flex-col justify-between rounded-xl border border-black/5 bg-sky-50/20 px-3.5 py-3 gap-2">
-                      <div className="flex items-center gap-1.5 text-sky-600">
-                        <MdWaterDrop size={15} className="shrink-0" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider">
-                          Kelembaban
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-gray-700">
-                          {plant.minMoisture.toFixed(0)}% - {plant.maxMoisture.toFixed(0)}%
-                        </p>
-                        <p className="text-[9px] text-sky-700/80 font-bold mt-0.5">
-                          Target: {plant.targetMoisture.toFixed(0)}%
-                        </p>
-                      </div>
-                      {/* Sub-visual progress indicator with target marker */}
-                      <div className="h-1.5 w-full bg-sky-100/80 rounded-full relative mt-0.5 overflow-visible">
-                        <div
-                          className="h-full bg-sky-400 rounded-full"
-                          style={{
-                            marginLeft: `${plant.minMoisture * 0.8}%`,
-                            width: `${(plant.maxMoisture - plant.minMoisture) * 0.8}%`,
-                          }}
-                        />
-                        <div
-                          className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-sky-700 border-2 border-white shadow-md transition-all duration-300 group-hover:scale-125"
-                          style={{ left: `calc(${plant.targetMoisture * 0.8}% - 5px)` }}
-                          title={`Target Optimal Kelembaban: ${plant.targetMoisture}%`}
-                        />
-                      </div>
+                  {/* Right Section: Optimal Parameters Box */}
+                  <div className="flex items-center gap-3 shrink-0 border-t md:border-t-0 border-black/5 pt-3 md:pt-0">
+                    {/* Kelembapan */}
+                    <div className="rounded-xl bg-sky-50 px-3 py-2 border border-sky-100 flex flex-col items-center min-w-[100px]">
+                      <span className="text-[9px] font-bold text-sky-600 uppercase tracking-wider">
+                        Kelembapan
+                      </span>
+                      <span className="text-xs font-bold text-gray-700 mt-0.5">
+                        {plant.minMoisture.toFixed(0)}% - {plant.maxMoisture.toFixed(0)}%
+                      </span>
+                      <span className="text-[9px] text-sky-700/80 font-semibold mt-0.5">
+                        Tgt: {plant.targetMoisture.toFixed(0)}%
+                      </span>
                     </div>
 
                     {/* pH Tanah */}
-                    <div className="flex flex-col justify-between rounded-xl border border-black/5 bg-amber-50/20 px-3.5 py-3 gap-2">
-                      <div className="flex items-center gap-1.5 text-amber-600">
-                        <MdOutlineScience size={15} className="shrink-0" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider">
-                          pH Tanah
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-gray-700">
-                          {plant.minPh.toFixed(1)} - {plant.maxPh.toFixed(1)}
-                        </p>
-                        <p className="text-[9px] text-amber-700/80 font-bold mt-0.5">
-                          Target: {plant.phTarget.toFixed(1)}
-                        </p>
-                      </div>
-                      {/* Sub-visual progress indicator with target marker */}
-                      <div className="h-1.5 w-full bg-amber-100/80 rounded-full relative mt-0.5 overflow-visible">
-                        <div
-                          className="h-full bg-amber-400 rounded-full"
-                          style={{
-                            marginLeft: `${(plant.minPh / 14) * 100}%`,
-                            width: `${((plant.maxPh - plant.minPh) / 14) * 100}%`,
-                          }}
-                        />
-                        <div
-                          className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-amber-700 border-2 border-white shadow-md transition-all duration-300 group-hover:scale-125"
-                          style={{ left: `calc(${(plant.phTarget / 14) * 100}% - 5px)` }}
-                          title={`Target Optimal pH: ${plant.phTarget}`}
-                        />
-                      </div>
+                    <div className="rounded-xl bg-amber-50 px-3 py-2 border border-amber-100 flex flex-col items-center min-w-[100px]">
+                      <span className="text-[9px] font-bold text-amber-600 uppercase tracking-wider">
+                        pH Tanah
+                      </span>
+                      <span className="text-xs font-bold text-gray-700 mt-0.5">
+                        {plant.minPh.toFixed(1)} - {plant.maxPh.toFixed(1)}
+                      </span>
+                      <span className="text-[9px] text-amber-700/80 font-semibold mt-0.5">
+                        Tgt: {plant.phTarget.toFixed(1)}
+                      </span>
                     </div>
                   </div>
                 </div>

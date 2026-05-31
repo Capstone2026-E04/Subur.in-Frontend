@@ -62,6 +62,12 @@ export function useSensorRealtime(deviceId: string): SensorData {
 
     es.onopen = () => {
       if (isMountedRef.current) setConnectionStatus("connected");
+      
+      if (typeof window !== "undefined" && "Notification" in window) {
+        if (Notification.permission === "default") {
+          Notification.requestPermission();
+        }
+      }
     };
 
     es.onmessage = (event) => {
@@ -72,6 +78,18 @@ export function useSensorRealtime(deviceId: string): SensorData {
         if (payload?.connected === true) {
           setConnectionStatus("connected");
           return;
+        }
+
+        // Tangani event notifikasi real-time browser dari backend
+        if (payload?.notification) {
+          if (typeof window !== "undefined" && "Notification" in window) {
+            if (Notification.permission === "granted") {
+              new Notification(payload.notification.title, {
+                body: payload.notification.message,
+                icon: "/favicon.ico",
+              });
+            }
+          }
         }
 
         if (payload?.ph !== undefined) setPh(payload.ph);

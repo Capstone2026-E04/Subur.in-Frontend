@@ -9,6 +9,7 @@ import {
   MdOutlineWaterDrop,
   MdOutlineLabel,
   MdCircle,
+  MdAccessTime,
 } from "react-icons/md";
 import type { RegisteredDevice, PlantOption, PolybagOption, UpdateDevicePayload, DeviceStatus } from "@/types/device";
 import { fetchPlants, fetchPolybags } from "@/services/deviceService";
@@ -32,6 +33,7 @@ export default function EditDeviceModal({
   const [selectedPlantId, setSelectedPlantId] = useState("");
   const [selectedPolybagId, setSelectedPolybagId] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<DeviceStatus>("ACTIVE");
+  const [sensorInterval, setSensorInterval] = useState(15);
   const [plants, setPlants] = useState<PlantOption[]>([]);
   const [polybags, setPolybags] = useState<PolybagOption[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +47,7 @@ export default function EditDeviceModal({
     setSelectedPlantId(device.plant?.id ?? "");
     setSelectedPolybagId(device.polybag?.id ?? "");
     setSelectedStatus(device.status);
+    setSensorInterval(device.sensorInterval ?? 15);
     setError(null);
   }
 
@@ -61,6 +64,13 @@ export default function EditDeviceModal({
     e.preventDefault();
     if (!device) return;
     if (!label.trim()) { setError("Nama alat tidak boleh kosong."); return; }
+    
+    const intervalNum = Number(sensorInterval);
+    if (isNaN(intervalNum) || !Number.isInteger(intervalNum) || intervalNum < 1) {
+      setError("Interval pengambilan data harus berupa bilangan bulat positif minimal 1 menit.");
+      return;
+    }
+
     setError(null);
     setIsSubmitting(true);
     try {
@@ -69,6 +79,7 @@ export default function EditDeviceModal({
         ...(selectedPlantId && { plantId: selectedPlantId }),
         ...(selectedPolybagId && { polybagId: selectedPolybagId }),
         status: selectedStatus,
+        sensorInterval: intervalNum,
       });
       onClose();
     } catch (err) {
@@ -104,8 +115,7 @@ export default function EditDeviceModal({
               exit={{ scale: 0.95, y: 16 }}
               transition={{ type: "spring", stiffness: 300, damping: 28 }}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-black/6 bg-gradient-to-r from-primary/5 to-transparent">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-black/6 bg-gray-50">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
                     <MdOutlineEdit size={18} className="text-primary" />
@@ -124,9 +134,7 @@ export default function EditDeviceModal({
                 </button>
               </div>
 
-              {/* Form */}
               <form id="edit-device-form" onSubmit={handleSubmit} className="flex flex-col gap-4 p-6">
-                {/* Label */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="edit-label-input" className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
                     <MdOutlineLabel size={13} />
@@ -142,7 +150,6 @@ export default function EditDeviceModal({
                   />
                 </div>
 
-                {/* Plant */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="edit-plant-select" className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
                     <MdOutlineSpa size={13} />
@@ -161,7 +168,6 @@ export default function EditDeviceModal({
                   </select>
                 </div>
 
-                {/* Polybag */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="edit-polybag-select" className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
                     <MdOutlineWaterDrop size={13} />
@@ -176,13 +182,35 @@ export default function EditDeviceModal({
                     <option value="">— Tidak diubah —</option>
                     {polybags.map((pb) => (
                       <option key={pb.id} value={pb.id}>
-                        {pb.name}{pb.size ? ` · ${pb.size}` : ""}
+                        {pb.name} | Diameter {pb.diameter}cm | Tinggi {pb.height}cm | Volume Tanah {pb.soilVolumeLiter}L
                       </option>
                     ))}
                   </select>
                 </div>
 
-                {/* Status */}
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="edit-interval-select" className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
+                    <MdAccessTime size={13} className="text-amber-500" />
+                    Interval Pengambilan Data
+                  </label>
+                  <select
+                    id="edit-interval-select"
+                    value={sensorInterval}
+                    onChange={(e) => setSensorInterval(Number(e.target.value))}
+                    className="w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition cursor-pointer"
+                  >
+                    <option value={1}>1 Menit</option>
+                    <option value={5}>5 Menit</option>
+                    <option value={10}>10 Menit</option>
+                    <option value={15}>15 Menit</option>
+                    <option value={30}>30 Menit</option>
+                    <option value={60}>1 jam</option>
+                  </select>
+                  <p className="text-[10px] text-gray-400 leading-normal">
+                    Tentukan seberapa sering alat membaca & mengirim data sensor.
+                  </p>
+                </div>
+
                 <div className="flex flex-col gap-1.5">
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
                     <MdCircle size={10} className="text-emerald-500" />
@@ -216,7 +244,6 @@ export default function EditDeviceModal({
                   </div>
                 </div>
 
-                {/* Error */}
                 <AnimatePresence>
                   {error && (
                     <motion.p
@@ -231,7 +258,6 @@ export default function EditDeviceModal({
                 </AnimatePresence>
               </form>
 
-              {/* Footer */}
               <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-black/6 bg-gray-50/50">
                 <button
                   type="button"

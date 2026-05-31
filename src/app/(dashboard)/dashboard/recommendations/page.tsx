@@ -24,7 +24,6 @@ import {
 } from "@/services/deviceService";
 import type { RegisteredDevice, DeviceRecommendation, RecommendationLogItem } from "@/types/device";
 
-// ── Skeleton Loader ────────────────────────────────────────────────────────────
 function PageSkeleton() {
   return (
     <div className="space-y-6 animate-pulse max-w-4xl mx-auto">
@@ -41,7 +40,6 @@ function PageSkeleton() {
   );
 }
 
-// ── Empty State ────────────────────────────────────────────────────────────────
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center text-center p-8 border border-dashed border-black/12 rounded-3xl bg-white/60 py-20 max-w-xl mx-auto shadow-sm my-8">
@@ -66,15 +64,23 @@ export default function RecommendationsPage() {
   const [historyLogs, setHistoryLogs] = useState<RecommendationLogItem[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
-  // Load all devices on mount
+  // Pagination & limit states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState<number | "all">(20);
+
   useEffect(() => {
     loadDevices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadDevices]);
 
   const selectedDevice = devices.find((d) => d.id === selectedDeviceId) || devices[0] || null;
 
-  // Fetch current recommendation & database logs
+  // Pagination slicing logic
+  const logsToDisplay = limit === "all"
+    ? historyLogs
+    : historyLogs.slice((currentPage - 1) * limit, currentPage * limit);
+
+  const totalPages = limit === "all" ? 1 : Math.ceil(historyLogs.length / limit);
+
   const loadData = useCallback(async () => {
     if (!token || !selectedDevice?.id) return;
     
@@ -82,7 +88,6 @@ export default function RecommendationsPage() {
     setIsHistoryLoading(true);
 
     try {
-      // 1. Fetch current AI recommendation
       const recData = await fetchDeviceRecommendation(token, selectedDevice.id);
       setRecommendation(recData);
     } catch (err) {
@@ -93,9 +98,9 @@ export default function RecommendationsPage() {
     }
 
     try {
-      // 2. Fetch history log from postgres recommendation_logs
       const historyData = await fetchRecommendationHistory(token, selectedDevice.id);
       setHistoryLogs(historyData);
+      setCurrentPage(1)
     } catch (err) {
       console.error("Gagal memuat riwayat rekomendasi:", err);
       setHistoryLogs([]);
@@ -127,7 +132,6 @@ export default function RecommendationsPage() {
 
   const plantName = selectedDevice.plant?.name ?? "Tanaman";
 
-  // Helper to map category code to Indonesian display text
   const getCategoryLabel = (code: string) => {
     const map: Record<string, string> = {
       C1: "Kondisi Optimal",
@@ -143,7 +147,6 @@ export default function RecommendationsPage() {
     return map[code] || code;
   };
 
-  // Helper to choose badge colors based on category code
   const getCategoryBadgeClass = (code: string) => {
     if (code === "C1") {
       return "bg-emerald-100/80 border-emerald-500/20 text-emerald-700";
@@ -159,19 +162,13 @@ export default function RecommendationsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-10">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/5 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black tracking-tight text-primary flex items-center gap-2">
-            <MdAutoAwesome className="text-primary animate-pulse" size={24} />
-            AI Care & Care Center
+          <h2 className="text-xl font-black tracking-tight text-primary">
+            Rekomendasi Treatment
           </h2>
-          <p className="text-xs text-gray-400 mt-1">
-            Pantau hasil kalkulasi Fuzzy Logic Mamdani dan riwayat log perawatan tanaman secara akurat.
-          </p>
         </div>
 
-        {/* Dropdown Device Selector */}
         <div className="relative">
           <label className="sr-only" htmlFor="rec-device-selector">Pilih Alat</label>
           <select
@@ -182,7 +179,7 @@ export default function RecommendationsPage() {
           >
             {devices.map((device) => (
               <option key={device.id} value={device.id}>
-                {device.label} ({device.id})
+                {device.label}
               </option>
             ))}
           </select>
@@ -192,9 +189,8 @@ export default function RecommendationsPage() {
         </div>
       </div>
 
-      {/* Main Care Panel */}
       <div className="rounded-2xl bg-white border border-black/6 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-black/6 bg-gradient-to-r from-primary/5 to-transparent">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-black/6">
           <div className="flex items-center gap-2">
             <MdOutlineSpa className="text-primary" size={20} />
             <h3 className="text-sm font-bold text-primary">
@@ -223,21 +219,17 @@ export default function RecommendationsPage() {
               </div>
               <p className="text-sm font-bold text-gray-700">Belum Ada Rekomendasi Terhitung</p>
               <p className="text-xs text-gray-400 mt-1.5 max-w-sm leading-relaxed">
-                Silakan nyalakan alat sensor ESP32 Anda untuk mulai menyuplai telemetri sensor pH dan kelembaban.
+                Silakan nyalakan alat sensor ESP32 Anda untuk mulai menyuplai telemetri sensor pH dan kelembapan.
               </p>
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Telemetry Status Summary Card */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-gray-50 border border-black/5">
                 <div className="space-y-1 md:col-span-2">
                   <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Diagnosis AI</span>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={`inline-flex items-center rounded-lg border px-3 py-1 text-sm font-black ${getCategoryBadgeClass(recommendation.categoryCode)}`}>
                       {getCategoryLabel(recommendation.categoryCode)}
-                    </span>
-                    <span className="inline-flex items-center rounded-lg bg-primary/10 border border-primary/5 px-2.5 py-1 text-xs font-bold text-primary">
-                      Fuzzy Index: {recommendation.fuzzyIndex.toFixed(3)}
                     </span>
                   </div>
                 </div>
@@ -254,7 +246,6 @@ export default function RecommendationsPage() {
                 </div>
               </div>
 
-              {/* Action Message Card */}
               <div className="space-y-2">
                 <span className="text-xs font-bold text-gray-600 flex items-center gap-1.5">
                   <MdGrass className="text-emerald-500" size={16} />
@@ -265,7 +256,6 @@ export default function RecommendationsPage() {
                 </div>
               </div>
 
-              {/* Graphical Dosage Section */}
               <div className="space-y-3">
                 <span className="text-xs font-bold text-gray-600 flex items-center gap-1.5">
                   <MdScience className="text-violet-500" size={16} />
@@ -287,9 +277,8 @@ export default function RecommendationsPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Water Volume Box */}
                     {recommendation.waterVolumeLiter > 0 && (
-                      <div className="relative group overflow-hidden flex items-start gap-3 rounded-2xl bg-gradient-to-br from-sky-50 to-sky-100/50 border border-sky-200/55 p-4 shadow-sm hover:shadow transition-all duration-300">
+                      <div className="relative group overflow-hidden flex items-start gap-3 rounded-2xl bg-sky-50 border border-sky-200/55 p-4 shadow-sm hover:shadow transition-all duration-300">
                         <div className="absolute right-[-10px] bottom-[-10px] text-sky-200/40 opacity-50 group-hover:scale-110 transition-transform duration-300">
                           <MdOpacity size={80} />
                         </div>
@@ -307,9 +296,8 @@ export default function RecommendationsPage() {
                       </div>
                     )}
 
-                    {/* Reduce watering alert */}
                     {recommendation.reduceWatering && (
-                      <div className="relative group overflow-hidden flex items-start gap-3 rounded-2xl bg-gradient-to-br from-rose-50 to-rose-100/50 border border-rose-200/55 p-4 shadow-sm hover:shadow transition-all duration-300">
+                      <div className="relative group overflow-hidden flex items-start gap-3 rounded-2xl bg-rose-50 border border-rose-200/55 p-4 shadow-sm hover:shadow transition-all duration-300">
                         <div className="absolute right-[-10px] bottom-[-10px] text-rose-200/40 opacity-50 group-hover:scale-110 transition-transform duration-300">
                           <MdWarningAmber size={80} />
                         </div>
@@ -326,7 +314,7 @@ export default function RecommendationsPage() {
 
                     {/* Lime (Dolomite) Box */}
                     {recommendation.limeDosageGram > 0 && (
-                      <div className="relative group overflow-hidden flex items-start gap-3 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/55 p-4 shadow-sm hover:shadow transition-all duration-300">
+                      <div className="relative group overflow-hidden flex items-start gap-3 rounded-2xl bg-emerald-50 border border-emerald-200/55 p-4 shadow-sm hover:shadow transition-all duration-300">
                         <div className="absolute right-[-10px] bottom-[-10px] text-emerald-200/40 opacity-50 group-hover:scale-110 transition-transform duration-300">
                           <MdScience size={80} />
                         </div>
@@ -344,9 +332,8 @@ export default function RecommendationsPage() {
                       </div>
                     )}
 
-                    {/* Sulfur Box */}
                     {recommendation.sulfurDosageGram > 0 && (
-                      <div className="relative group overflow-hidden flex items-start gap-3 rounded-2xl bg-gradient-to-br from-violet-50 to-violet-100/50 border border-violet-200/55 p-4 shadow-sm hover:shadow transition-all duration-300">
+                      <div className="relative group overflow-hidden flex items-start gap-3 rounded-2xl bg-violet-50 border border-violet-200/55 p-4 shadow-sm hover:shadow transition-all duration-300">
                         <div className="absolute right-[-10px] bottom-[-10px] text-violet-200/40 opacity-50 group-hover:scale-110 transition-transform duration-300">
                           <MdScience size={80} />
                         </div>
@@ -371,11 +358,32 @@ export default function RecommendationsPage() {
         </div>
       </div>
 
-      {/* Database recommendation_logs History Panel */}
       <div className="rounded-2xl bg-white border border-black/6 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-black/6 bg-gradient-to-r from-primary/5 to-transparent">
-          <MdHistory className="text-primary" size={20} />
-          <h3 className="text-sm font-bold text-primary">Riwayat Log Rekomendasi</h3>
+        <div className="flex flex-wrap items-center justify-between px-5 py-4 border-b border-black/6 bg-gray-50 gap-4">
+          <div className="flex items-center gap-2">
+            <MdHistory className="text-primary" size={20} />
+            <h3 className="text-sm font-bold text-primary">Riwayat Log Rekomendasi</h3>
+          </div>
+
+          {historyLogs.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Tampilkan:</span>
+              <select
+                id="logs-limit-select"
+                value={limit}
+                onChange={(e) => {
+                  setLimit(e.target.value === "all" ? "all" : Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="rounded-xl border border-black/10 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer shadow-sm"
+              >
+                <option value={10}>10 data</option>
+                <option value={20}>20 data</option>
+                <option value={50}>50 data</option>
+                <option value="all">Semua data</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="p-0">
@@ -395,88 +403,133 @@ export default function RecommendationsPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-black/6 text-gray-400 font-bold uppercase tracking-wider">
-                    <th className="px-5 py-3">Waktu</th>
-                    <th className="px-5 py-3">Sensor</th>
-                    <th className="px-5 py-3">Diagnosis AI</th>
-                    <th className="px-5 py-3">Fuzzy Index</th>
-                    <th className="px-5 py-3 text-right">Rekomendasi Tindakan</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-black/5">
-                  {historyLogs.map((log) => {
-                    const hasDose = log.waterVolumeLiter > 0 || log.limeDosageGram > 0 || log.sulfurDosageGram > 0;
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-black/6 text-gray-400 font-bold uppercase tracking-wider">
+                      <th className="px-5 py-3">Waktu</th>
+                      <th className="px-5 py-3">Sensor</th>
+                      <th className="px-5 py-3">Diagnosis AI</th>
+                      <th className="px-5 py-3 text-right">Rekomendasi Tindakan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/5">
+                    {logsToDisplay.map((log) => {
+                      const hasDose = log.waterVolumeLiter > 0 || log.limeDosageGram > 0 || log.sulfurDosageGram > 0;
+                      
+                      return (
+                        <tr key={log.id} className="hover:bg-primary/5 transition-colors group">
+                          <td className="px-5 py-3.5 font-semibold text-gray-700 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <MdSchedule className="text-gray-400" size={13} />
+                              {new Date(log.createdAt).toLocaleString("id-ID", {
+                                dateStyle: "medium",
+                                timeStyle: "medium",
+                              })}
+                            </div>
+                          </td>
+                          <td className="px-5 py-3.5 whitespace-nowrap">
+                            <div className="space-y-0.5">
+                              <p className="font-bold text-gray-800">
+                                pH: <span className="text-emerald-600 font-black">{log.phValue.toFixed(1)}</span>
+                              </p>
+                              <p className="text-gray-500 font-medium">
+                                Lembap: <span className="text-sky-600 font-bold">{log.moistureValue.toFixed(0)}%</span>
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-5 py-3.5 whitespace-nowrap">
+                            <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-black ${getCategoryBadgeClass(log.categoryCode)}`}>
+                              {getCategoryLabel(log.categoryCode)}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5 text-right whitespace-nowrap">
+                            <div className="flex flex-col items-end gap-1">
+                              {!hasDose && !log.reduceWatering ? (
+                                <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-500/10">
+                                  Aman (Pertahankan)
+                                </span>
+                              ) : (
+                                <div className="flex flex-wrap gap-1 justify-end max-w-[200px]">
+                                  {log.waterVolumeLiter > 0 && (
+                                    <span className="inline-flex items-center rounded bg-sky-50 px-1.5 py-0.5 text-[9px] font-bold text-sky-700 border border-sky-500/10">
+                                      Air: {log.waterVolumeLiter.toFixed(1)}L
+                                    </span>
+                                  )}
+                                  {log.reduceWatering && (
+                                    <span className="inline-flex items-center rounded bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-700 border border-rose-500/10">
+                                      Hentikan Siram
+                                    </span>
+                                  )}
+                                  {log.limeDosageGram > 0 && (
+                                    <span className="inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 border border-emerald-500/10">
+                                      Kapur: {log.limeDosageGram.toFixed(0)}g
+                                    </span>
+                                  )}
+                                  {log.sulfurDosageGram > 0 && (
+                                    <span className="inline-flex items-center rounded bg-violet-50 px-1.5 py-0.5 text-[9px] font-bold text-violet-700 border border-violet-500/10">
+                                      Sulfur: {log.sulfurDosageGram.toFixed(0)}g
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Sleek Pagination Bar */}
+              {limit !== "all" && historyLogs.length > limit && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-5 py-4 border-t border-black/5 bg-gray-50/50">
+                  <span className="text-xs text-gray-400 font-semibold text-center sm:text-left">
+                    Menampilkan <span className="font-bold text-gray-700">{((currentPage - 1) * limit) + 1}</span> -{" "}
+                    <span className="font-bold text-gray-700">{Math.min(currentPage * limit, historyLogs.length)}</span> dari{" "}
+                    <span className="font-bold text-gray-700">{historyLogs.length}</span> data
+                  </span>
+                  
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      className="px-3 py-1.5 rounded-xl border border-black/8 bg-white text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition cursor-pointer shadow-sm"
+                    >
+                      Sebelumnya
+                    </button>
                     
-                    return (
-                      <tr key={log.id} className="hover:bg-primary/5 transition-colors group">
-                        <td className="px-5 py-3.5 font-semibold text-gray-700 whitespace-nowrap">
-                          <div className="flex items-center gap-1.5">
-                            <MdSchedule className="text-gray-400" size={13} />
-                            {new Date(log.createdAt).toLocaleString("id-ID", {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                            })}
-                          </div>
-                        </td>
-                        <td className="px-5 py-3.5 whitespace-nowrap">
-                          <div className="space-y-0.5">
-                            <p className="font-bold text-gray-800">
-                              pH: <span className="text-emerald-600 font-black">{log.phValue.toFixed(1)}</span>
-                            </p>
-                            <p className="text-gray-500 font-medium">
-                              Lembap: <span className="text-sky-600 font-bold">{log.moistureValue.toFixed(0)}%</span>
-                            </p>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3.5 whitespace-nowrap">
-                          <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-black ${getCategoryBadgeClass(log.categoryCode)}`}>
-                            {getCategoryLabel(log.categoryCode)}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5 font-mono text-gray-500 font-bold whitespace-nowrap">
-                          {log.fuzzyIndex.toFixed(3)}
-                        </td>
-                        <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                          <div className="flex flex-col items-end gap-1">
-                            {!hasDose && !log.reduceWatering ? (
-                              <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-500/10">
-                                Aman (Pertahankan)
-                              </span>
-                            ) : (
-                              <div className="flex flex-wrap gap-1 justify-end max-w-[200px]">
-                                {log.waterVolumeLiter > 0 && (
-                                  <span className="inline-flex items-center rounded bg-sky-50 px-1.5 py-0.5 text-[9px] font-bold text-sky-700 border border-sky-500/10">
-                                    Air: {log.waterVolumeLiter.toFixed(1)}L
-                                  </span>
-                                )}
-                                {log.reduceWatering && (
-                                  <span className="inline-flex items-center rounded bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-700 border border-rose-500/10">
-                                    Hentikan Siram
-                                  </span>
-                                )}
-                                {log.limeDosageGram > 0 && (
-                                  <span className="inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 border border-emerald-500/10">
-                                    Kapur: {log.limeDosageGram.toFixed(0)}g
-                                  </span>
-                                )}
-                                {log.sulfurDosageGram > 0 && (
-                                  <span className="inline-flex items-center rounded bg-violet-50 px-1.5 py-0.5 text-[9px] font-bold text-violet-700 border border-violet-500/10">
-                                    Sulfur: {log.sulfurDosageGram.toFixed(0)}g
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    {Array.from({ length: totalPages }).map((_, i) => {
+                      const pageNum = i + 1;
+                      const isCurrent = currentPage === pageNum;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shadow-sm ${
+                            isCurrent
+                              ? "bg-primary text-white border border-primary font-black"
+                              : "border border-black/8 bg-white text-gray-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      className="px-3 py-1.5 rounded-xl border border-black/8 bg-white text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition cursor-pointer shadow-sm"
+                    >
+                      Selanjutnya
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -12,6 +12,7 @@ import {
   MdOutlineLabel,
   MdSignalWifiOff,
   MdLinkOff,
+  MdAccessTime,
 } from "react-icons/md";
 import type { DiscoveredDevice, PlantOption, PolybagOption } from "@/types/device";
 import { fetchDiscoveredDevices, fetchPlants, fetchPolybags } from "@/services/deviceService";
@@ -26,6 +27,7 @@ interface ConnectDeviceModalProps {
     label: string;
     plantId: string;
     polybagId: string;
+    sensorInterval?: number;
   }) => Promise<unknown>;
 }
 
@@ -49,20 +51,18 @@ export default function ConnectDeviceModal({
   onSuccess,
   onClaim,
 }: ConnectDeviceModalProps) {
-  // Discovery state
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
   const [discovered, setDiscovered] = useState<DiscoveredDevice[]>([]);
   const [scanError, setScanError] = useState<string | null>(null);
 
-  // Options
   const [plants, setPlants] = useState<PlantOption[]>([]);
   const [polybags, setPolybags] = useState<PolybagOption[]>([]);
 
-  // Form state
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
   const [label, setLabel] = useState("");
   const [selectedPlantId, setSelectedPlantId] = useState("");
   const [selectedPolybagId, setSelectedPolybagId] = useState("");
+  const [sensorInterval, setSensorInterval] = useState(15);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -74,12 +74,12 @@ export default function ConnectDeviceModal({
     setLabel("");
     setSelectedPlantId("");
     setSelectedPolybagId("");
+    setSensorInterval(15);
     setFormError(null);
   } else if (!isOpen && prevIsOpen) {
     setPrevIsOpen(false);
   }
 
-  // ── Scan for discovered devices ─────────────────────────────────────────────
   const scan = useCallback(async () => {
     if (!token) return;
     setScanStatus("scanning");
@@ -94,7 +94,6 @@ export default function ConnectDeviceModal({
     }
   }, [token]);
 
-  // ── Load plants + polybags ──────────────────────────────────────────────────
   useEffect(() => {
     if (!isOpen || !token) return;
 
@@ -114,7 +113,6 @@ export default function ConnectDeviceModal({
     return () => clearTimeout(timer);
   }, [isOpen, token, scan]);
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
@@ -131,6 +129,7 @@ export default function ConnectDeviceModal({
         label: label.trim(),
         plantId: selectedPlantId,
         polybagId: selectedPolybagId,
+        sensorInterval: Number(sensorInterval),
       });
       onSuccess();
       onClose();
@@ -141,24 +140,21 @@ export default function ConnectDeviceModal({
     }
   }
 
-  // ── Derived ─────────────────────────────────────────────────────────────────
   const selectedDeviceInfo = discovered.find((d) => d.deviceId === selectedDeviceId);
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             key="backdrop"
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm top-0 left-0 right-0 bottom-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
 
-          {/* Modal Panel */}
           <motion.div
             key="modal"
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -173,8 +169,7 @@ export default function ConnectDeviceModal({
               exit={{ scale: 0.95, y: 16 }}
               transition={{ type: "spring", stiffness: 300, damping: 28 }}
             >
-              {/* Modal Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-black/6 bg-gradient-to-r from-primary/5 to-transparent shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-black/6 bg-gray-50 shrink-0">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
                     <MdOutlineWifi size={18} className="text-primary" />
@@ -198,14 +193,11 @@ export default function ConnectDeviceModal({
                 </button>
               </div>
 
-              {/* Scrollable Body */}
               <div className="overflow-y-auto flex-1">
                 <form id="connect-device-form" onSubmit={handleSubmit} className="flex flex-col gap-5 p-6">
 
-                  {/* ── Step 1: Device Discovery ── */}
                   <fieldset className="rounded-xl border border-black/6 overflow-hidden">
                     <legend className="sr-only">Pilih Alat</legend>
-                    {/* Discovery Header */}
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-50/80 border-b border-black/5">
                       <div className="flex items-center gap-2">
                         <MdOutlineDeviceHub size={15} className="text-primary" />
@@ -229,7 +221,6 @@ export default function ConnectDeviceModal({
                     </div>
 
                     <div className="p-4">
-                      {/* Scanning pulse */}
                       {scanStatus === "scanning" && (
                         <motion.div
                           initial={{ opacity: 0 }}
@@ -252,7 +243,6 @@ export default function ConnectDeviceModal({
                         </motion.div>
                       )}
 
-                      {/* No devices found */}
                       {scanStatus === "done" && discovered.length === 0 && (
                         <motion.div
                           initial={{ opacity: 0, y: 6 }}
@@ -273,7 +263,6 @@ export default function ConnectDeviceModal({
                         </motion.div>
                       )}
 
-                      {/* Scan error */}
                       {scanStatus === "error" && (
                         <div className="flex items-start gap-2 rounded-xl bg-rose-50 px-4 py-3 text-xs text-rose-700">
                           <MdLinkOff size={14} className="shrink-0 mt-0.5" />
@@ -281,7 +270,6 @@ export default function ConnectDeviceModal({
                         </div>
                       )}
 
-                      {/* Device dropdown */}
                       {scanStatus === "done" && discovered.length > 0 && (
                         <motion.div
                           initial={{ opacity: 0 }}
@@ -305,7 +293,6 @@ export default function ConnectDeviceModal({
                             ))}
                           </select>
 
-                          {/* Selected device preview */}
                           {selectedDeviceInfo && (
                             <motion.div
                               key={selectedDeviceId}
@@ -334,7 +321,6 @@ export default function ConnectDeviceModal({
                     </div>
                   </fieldset>
 
-                  {/* ── Step 2: Form Inputs ── */}
                   <fieldset className="rounded-xl border border-black/6 overflow-hidden">
                     <legend className="sr-only">Detail Alat</legend>
                     <div className="px-4 py-3 bg-gray-50/80 border-b border-black/5">
@@ -344,7 +330,6 @@ export default function ConnectDeviceModal({
                     </div>
 
                     <div className="flex flex-col gap-4 p-4">
-                      {/* Label */}
                       <div className="flex flex-col gap-1.5">
                         <label
                           htmlFor="device-label-input"
@@ -364,7 +349,6 @@ export default function ConnectDeviceModal({
                         />
                       </div>
 
-                      {/* Plant */}
                       <div className="flex flex-col gap-1.5">
                         <label
                           htmlFor="select-plant"
@@ -393,7 +377,6 @@ export default function ConnectDeviceModal({
                         )}
                       </div>
 
-                      {/* Polybag */}
                       <div className="flex flex-col gap-1.5">
                         <label
                           htmlFor="select-polybag"
@@ -411,16 +394,40 @@ export default function ConnectDeviceModal({
                           <option value="">— Pilih polybag —</option>
                           {polybags.map((pb) => (
                             <option key={pb.id} value={pb.id}>
-                              {pb.name}
-                              {pb.size ? ` · ${pb.size}` : ""}
+                              {pb.name} | Diameter {pb.diameter}cm | Tinggi {pb.height}cm | Volume Tanah {pb.soilVolumeLiter}L
                             </option>
                           ))}
                         </select>
                       </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label
+                          htmlFor="select-interval"
+                          className="flex items-center gap-1.5 text-xs font-semibold text-gray-600"
+                        >
+                          <MdAccessTime size={13} className="text-amber-500" />
+                          Interval Pengambilan Data (Menit)
+                        </label>
+                        <select
+                          id="select-interval"
+                          value={sensorInterval}
+                          onChange={(e) => setSensorInterval(Number(e.target.value))}
+                          className="w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition cursor-pointer"
+                        >
+                          <option value={1}>1 Menit</option>
+                          <option value={5}>5 Menit</option>
+                          <option value={10}>10 Menit</option>
+                          <option value={15}>15 Menit</option>
+                          <option value={30}>30 Menit</option>
+                          <option value={60}>1 jam</option>
+                        </select>
+                        <p className="text-[10px] text-gray-400 leading-normal">
+                          Tentukan seberapa sering alat membaca & mengirim data sensor.
+                        </p>
+                      </div>
                     </div>
                   </fieldset>
 
-                  {/* Form error */}
                   <AnimatePresence>
                     {formError && (
                       <motion.p
@@ -436,7 +443,6 @@ export default function ConnectDeviceModal({
                 </form>
               </div>
 
-              {/* Footer Actions */}
               <div className="shrink-0 flex items-center justify-end gap-3 px-6 py-4 border-t border-black/6 bg-gray-50/50">
                 <button
                   type="button"

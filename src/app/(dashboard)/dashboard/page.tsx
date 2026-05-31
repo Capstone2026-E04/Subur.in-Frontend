@@ -19,16 +19,13 @@ import {
 import { useDevices } from "@/hooks/useDevices";
 import { fetchDeviceRecommendation } from "@/services/deviceService";
 import StatCard from "@/components/dashboard/StatCard";
-import LiveLocationTracker from "@/components/dashboard/LiveLocationTracker";
 import SensorMonitorPanel from "@/components/dashboard/SensorMonitorPanel";
 import SensorHistoryChart from "@/components/dashboard/SensorHistoryChart";
 import type { RegisteredDevice, DeviceRecommendation } from "@/types/device";
 
-// ── Skeleton Loader ────────────────────────────────────────────────────────────
-
 function DashboardSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse max-w-4xl mx-auto">
+    <div className="space-y-6 animate-pulse w-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-black/5">
         <div className="space-y-2">
           <div className="h-6 bg-gray-200 rounded w-48"></div>
@@ -73,8 +70,6 @@ function EmptyDashboardState() {
     </div>
   );
 }
-
-// ── Unselected State ───────────────────────────────────────────────────────────
 
 function UnselectedDeviceState({
   devices,
@@ -125,8 +120,6 @@ function UnselectedDeviceState({
   );
 }
 
-// ── Main Dashboard Component ───────────────────────────────────────────────────
-
 export default function DashboardPage() {
   const { devices, isLoading, token, loadDevices } = useDevices();
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
@@ -135,8 +128,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDevices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadDevices]);
 
   const selectedDevice = devices.find((d) => d.id === selectedDeviceId) || devices[0] || null;
 
@@ -170,7 +162,6 @@ export default function DashboardPage() {
     return <UnselectedDeviceState devices={devices} onSelect={(dev) => setSelectedDeviceId(dev.id)} />;
   }
 
-  // Dynamic values responsive to selected device
   const plantName = selectedDevice.plant?.name ?? "Tanaman";
   const polybagInfo = selectedDevice.polybag
     ? `${selectedDevice.polybag.name}${
@@ -206,20 +197,18 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Device Selector Header */}
+    <div className="space-y-6 w-full">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/5 pb-4">
         <div>
           <h2 className="text-lg font-bold text-primary">Ringkasan Kondisi</h2>
           <p className="text-xs text-gray-400 mt-1">
             Menampilkan data real-time untuk perangkat:{" "}
             <span className="font-semibold text-gray-700">
-              {selectedDevice.label} ({selectedDevice.id})
+              {selectedDevice.label}
             </span>
           </p>
         </div>
         
-        {/* Dropdown Selector */}
         <div className="relative">
           <label className="sr-only" htmlFor="dashboard-device-selector">Pilih Alat</label>
           <select
@@ -232,7 +221,7 @@ export default function DashboardPage() {
           >
             {devices.map((device) => (
               <option key={device.id} value={device.id}>
-                {device.label} ({device.id})
+                {device.label}
               </option>
             ))}
           </select>
@@ -242,27 +231,10 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Geolocation Map Tracker */}
-      <LiveLocationTracker />
-
-      {/* Real-time Sensor Monitor for Selected Device */}
-      <SensorMonitorPanel deviceId={selectedDevice.id} />
-
-      {/* Sensor History Visualization Chart */}
-      <SensorHistoryChart deviceId={selectedDevice.id} token={token} />
-
-      {/* Dynamic Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <StatCard key={stat.label} {...stat} />
-        ))}
-      </div>
-
-      {/* AI Fuzzy Recommendation Panel */}
+      {/* AI Fuzzy Recommendation Panel (Placed at the very top!) */}
       <div className="rounded-2xl bg-white border border-black/6 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-black/6 bg-gradient-to-r from-primary/5 to-transparent">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-black/6 bg-gray-50">
           <div className="flex items-center gap-2">
-            <MdAutoAwesome className="text-primary animate-pulse" size={18} />
             <h3 className="text-sm font-bold text-primary">
               Rekomendasi AI (Fuzzy Logic)
             </h3>
@@ -294,45 +266,33 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Top Condition Card */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-gray-50 border border-black/5">
-                <div className="space-y-1">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Kondisi Tanah</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-gray-800">
-                      {recommendation.categoryCode.replace(/_/g, " ")}
-                    </span>
-                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
-                      Fuzzy Index: {recommendation.fuzzyIndex.toFixed(2)}
-                    </span>
-                  </div>
+              {/* Top Condition Card (Simplified: No code C1/C2/etc., No fuzzy index) */}
+              <div className="flex items-center justify-start gap-8 p-4 rounded-xl bg-gray-50 border border-black/5">
+                <div>
+                  <span className="text-xs text-gray-400 font-semibold block">pH Terukur</span>
+                  <span className="text-base font-bold text-emerald-600">{recommendation.phValue.toFixed(1)}</span>
                 </div>
-                <div className="flex gap-4 sm:border-l sm:border-black/5 sm:pl-6">
-                  <div>
-                    <span className="text-xs text-gray-400 font-semibold block">pH Terukur</span>
-                    <span className="text-sm font-bold text-emerald-600">{recommendation.phValue.toFixed(1)}</span>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-400 font-semibold block">Kelembaban</span>
-                    <span className="text-sm font-bold text-sky-600">{recommendation.moistureValue.toFixed(0)}%</span>
-                  </div>
+                <div className="w-px h-8 bg-black/5" />
+                <div>
+                  <span className="text-xs text-gray-400 font-semibold block">Kelembapan Terukur</span>
+                  <span className="text-base font-bold text-sky-600">{recommendation.moistureValue.toFixed(0)}%</span>
                 </div>
               </div>
 
-              {/* AI Recommendation Message */}
+              {/* AI Recommendation Message (Highlighted) */}
               <div className="space-y-2">
-                <span className="text-xs font-semibold text-gray-600 flex items-center gap-1">
+                <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
                   <MdGrass className="text-emerald-500" size={14} />
                   Tindakan Perawatan yang Disarankan:
                 </span>
-                <p className="text-sm text-gray-700 leading-relaxed font-medium bg-emerald-50/20 border border-emerald-500/10 rounded-xl p-4">
+                <p className="text-sm text-emerald-950 font-bold bg-emerald-50 border-l-4 border-emerald-500 rounded-r-xl p-4.5 shadow-sm leading-relaxed">
                   {recommendation.actionText}
                 </p>
               </div>
 
-              {/* Action Badges / Dosage Instructions */}
+              {/* Action Badges / Dosage Instructions (Highlighted) */}
               <div className="space-y-2.5">
-                <span className="text-xs font-semibold text-gray-600 flex items-center gap-1">
+                <span className="text-xs font-bold text-violet-700 flex items-center gap-1">
                   <MdScience className="text-violet-500" size={14} />
                   Panduan Dosis Pengairan & Nutrisi:
                 </span>
@@ -342,12 +302,12 @@ export default function DashboardPage() {
                 recommendation.limeDosageGram === 0 &&
                 recommendation.sulfurDosageGram === 0 &&
                 !recommendation.reduceWatering ? (
-                  <div className="flex items-start gap-3 rounded-xl bg-emerald-50/50 border border-emerald-200/50 p-4">
+                  <div className="flex items-start gap-3 rounded-xl bg-emerald-50 border border-emerald-200 p-4">
                     <MdCheckCircleOutline className="text-emerald-500 shrink-0 mt-0.5" size={18} />
                     <div>
                       <p className="text-xs font-bold text-emerald-800">Kondisi Sangat Baik</p>
                       <p className="text-xs text-emerald-700/80 mt-0.5 leading-relaxed">
-                        Tingkat keasaman (pH) dan kelembaban tanah Anda saat ini sangat ideal untuk pertumbuhan optimal tanaman **{plantName}**. Teruskan pola penyiraman harian normal.
+                        Tingkat keasaman (pH) dan kelembapan tanah Anda saat ini sangat ideal untuk pertumbuhan optimal tanaman **{plantName}**. Teruskan pola penyiraman harian normal.
                       </p>
                     </div>
                   </div>
@@ -355,12 +315,12 @@ export default function DashboardPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {/* Water Dosage */}
                     {recommendation.waterVolumeLiter > 0 && (
-                      <div className="flex items-start gap-3 rounded-xl bg-sky-50 border border-sky-100 p-3.5">
+                      <div className="flex items-start gap-3 rounded-xl bg-sky-50 border-l-4 border-sky-500 p-4 shadow-sm">
                         <MdOpacity className="text-sky-500 shrink-0 mt-0.5 animate-bounce" size={18} />
                         <div>
                           <p className="text-xs font-bold text-sky-800">Saran Penyiraman</p>
                           <p className="text-xs text-sky-700/80 mt-0.5 leading-relaxed">
-                            Siram media tanam dengan **{recommendation.waterVolumeLiter.toFixed(1)} Liter** air untuk mengembalikan kelembaban optimal.
+                            Siram media tanam dengan **{recommendation.waterVolumeLiter.toFixed(1)} Liter** air untuk mengembalikan kelembapan optimal.
                           </p>
                         </div>
                       </div>
@@ -368,7 +328,7 @@ export default function DashboardPage() {
 
                     {/* Reduce watering */}
                     {recommendation.reduceWatering && (
-                      <div className="flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-100 p-3.5">
+                      <div className="flex items-start gap-3 rounded-xl bg-amber-50 border-l-4 border-amber-500 p-4 shadow-sm">
                         <MdWarningAmber className="text-amber-500 shrink-0 mt-0.5" size={18} />
                         <div>
                           <p className="text-xs font-bold text-amber-800">Hentikan / Kurangi Penyiraman</p>
@@ -381,7 +341,7 @@ export default function DashboardPage() {
 
                     {/* Lime (Dolomit) Dosage */}
                     {recommendation.limeDosageGram > 0 && (
-                      <div className="flex items-start gap-3 rounded-xl bg-emerald-50 border border-emerald-100 p-3.5">
+                      <div className="flex items-start gap-3 rounded-xl bg-emerald-50 border-l-4 border-emerald-500 p-4 shadow-sm">
                         <MdScience className="text-emerald-500 shrink-0 mt-0.5" size={18} />
                         <div>
                           <p className="text-xs font-bold text-emerald-800">Saran Pengapuran (Naikkan pH)</p>
@@ -394,7 +354,7 @@ export default function DashboardPage() {
 
                     {/* Sulfur Dosage */}
                     {recommendation.sulfurDosageGram > 0 && (
-                      <div className="flex items-start gap-3 rounded-xl bg-violet-50 border border-violet-100 p-3.5">
+                      <div className="flex items-start gap-3 rounded-xl bg-violet-50 border-l-4 border-violet-500 p-4 shadow-sm">
                         <MdScience className="text-violet-500 shrink-0 mt-0.5" size={18} />
                         <div>
                           <p className="text-xs font-bold text-violet-800">Saran Pemberian Belerang (Turunkan pH)</p>
@@ -410,6 +370,16 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+      </div>
+
+      <SensorMonitorPanel deviceId={selectedDevice.id} deviceLabel={selectedDevice.label} />
+
+      <SensorHistoryChart deviceId={selectedDevice.id} token={token} simple={true} />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {stats.map((stat) => (
+          <StatCard key={stat.label} {...stat} />
+        ))}
       </div>
     </div>
   );

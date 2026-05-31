@@ -1,5 +1,3 @@
-// ── Registered Device (from Supabase via GET /api/devices) ───────────────────
-
 export type DeviceStatus = "ACTIVE" | "INACTIVE";
 
 export interface RegisteredDevice {
@@ -9,6 +7,7 @@ export interface RegisteredDevice {
   status: DeviceStatus;
   lastSeenAt: string | null;
   createdAt: string;
+  sensorInterval?: number;
   plant?: {
     id: string;
     name: string;
@@ -19,8 +18,6 @@ export interface RegisteredDevice {
     size?: string;
   } | null;
 }
-
-// ── Discovered Device (from Redis via GET /api/devices/discovered) ────────────
 
 export interface DiscoveredDevice {
   deviceId: string;
@@ -52,16 +49,18 @@ export interface Plant {
 export interface PolybagOption {
   id: string;
   name: string;
-  size?: string;
+  diameter?: number;
+  height?: number;
+  soilVolumeLiter?: number;
 }
 
-// ── API Payloads ──────────────────────────────────────────────────────────────
 
 export interface ClaimDevicePayload {
   deviceId: string;
   label: string;
   plantId: string;
   polybagId: string;
+  sensorInterval?: number;
 }
 
 export interface UpdateDevicePayload {
@@ -69,6 +68,7 @@ export interface UpdateDevicePayload {
   plantId?: string;
   polybagId?: string;
   status?: DeviceStatus;
+  sensorInterval?: number;
 }
 
 export interface SensorHistoryItem {
@@ -113,6 +113,19 @@ export interface RecommendationLogItem {
       name: string;
       scientificName?: string;
     } | null;
+  } | null;
+}
+
+export interface NotificationItem {
+  id: string;
+  deviceId: string;
+  title: string;
+  message: string;
+  type: "warning" | "success" | "info";
+  isRead: boolean;
+  createdAt: string;
+  device?: {
+    label: string;
   } | null;
 }
 
