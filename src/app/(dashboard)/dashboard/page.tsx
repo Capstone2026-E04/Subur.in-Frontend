@@ -17,6 +17,7 @@ import {
   MdWarningAmber,
 } from "react-icons/md";
 import { useDevices } from "@/hooks/useDevices";
+import { useSensorRealtime } from "@/hooks/useSensorRealtime";
 import { fetchDeviceRecommendation } from "@/services/deviceService";
 import StatCard from "@/components/dashboard/StatCard";
 import SensorMonitorPanel from "@/components/dashboard/SensorMonitorPanel";
@@ -132,23 +133,34 @@ export default function DashboardPage() {
 
   const selectedDevice = devices.find((d) => d.id === selectedDeviceId) || devices[0] || null;
 
-  const loadRecommendation = useCallback(async () => {
+  // Sambungkan ke real-time hook untuk mendapatkan telemetry sensor secara langsung
+  const { ph, moisture, lastUpdated } = useSensorRealtime(selectedDevice?.id || "");
+
+  const loadRecommendation = useCallback(async (silent = false) => {
     if (!token || !selectedDevice?.id) return;
-    setIsRecLoading(true);
+    if (!silent) setIsRecLoading(true);
     try {
       const data = await fetchDeviceRecommendation(token, selectedDevice.id);
       setRecommendation(data);
     } catch {
       setRecommendation(null);
     } finally {
-      setIsRecLoading(false);
+      if (!silent) setIsRecLoading(false);
     }
   }, [token, selectedDevice?.id]);
 
+  // Load awal rekomendasi ketika alat yang dipilih berubah
   useEffect(() => {
-    loadRecommendation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadRecommendation]);
+    loadRecommendation(false);
+  }, [selectedDevice?.id, loadRecommendation]);
+
+  // Pemicu otomatis real-time: jika data sensor terupdate via SSE,
+  // ambil ulang rekomendasi fuzzy dari backend secara senyap (silent) di latar belakang
+  useEffect(() => {
+    if (lastUpdated) {
+      loadRecommendation(true);
+    }
+  }, [lastUpdated, loadRecommendation]);
 
   if (isLoading) {
     return <DashboardSkeleton />;
@@ -270,12 +282,16 @@ export default function DashboardPage() {
               <div className="flex items-center justify-start gap-8 p-4 rounded-xl bg-gray-50 border border-black/5">
                 <div>
                   <span className="text-xs text-gray-400 font-semibold block">pH Terukur</span>
-                  <span className="text-base font-bold text-emerald-600">{recommendation.phValue.toFixed(1)}</span>
+                  <span className="text-base font-bold text-emerald-600">
+                    {(ph !== null ? ph : recommendation.phValue).toFixed(1)}
+                  </span>
                 </div>
                 <div className="w-px h-8 bg-black/5" />
                 <div>
                   <span className="text-xs text-gray-400 font-semibold block">Kelembapan Terukur</span>
-                  <span className="text-base font-bold text-sky-600">{recommendation.moistureValue.toFixed(0)}%</span>
+                  <span className="text-base font-bold text-sky-600">
+                    {(moisture !== null ? moisture : recommendation.moistureValue).toFixed(0)}%
+                  </span>
                 </div>
               </div>
 

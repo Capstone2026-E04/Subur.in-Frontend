@@ -20,6 +20,7 @@ import {
 } from "react-icons/md";
 import { fetchSensorHistory } from "@/services/deviceService";
 import type { SensorHistoryItem } from "@/types/device";
+import { useSensorRealtime } from "@/hooks/useSensorRealtime";
 
 interface SensorHistoryChartProps {
   deviceId: string;
@@ -91,6 +92,33 @@ export default function SensorHistoryChart({
   const [limit, setLimit] = useState(simple ? 15 : 20);
   const [viewMode, setViewMode] = useState<ChartViewMode>("both");
   const [error, setError] = useState<string | null>(null);
+
+  // Hubungkan ke hook real-time SSE
+  const { ph, moisture, lastUpdated } = useSensorRealtime(deviceId);
+
+  // Efek untuk menyinkronkan data real-time ke dalam riwayat grafik secara dinamis
+  useEffect(() => {
+    if (ph !== null && moisture !== null && lastUpdated) {
+      setHistory((prev) => {
+        // Hindari duplikasi data jika data dengan timestamp yang sama sudah ada
+        if (prev.some((item) => item.timestamp === lastUpdated)) {
+          return prev;
+        }
+        const newItem: SensorHistoryItem = {
+          id: Date.now(), // Gunakan timestamp sebagai ID unik lokal
+          deviceId,
+          ph,
+          moisture,
+          timestamp: lastUpdated,
+        };
+        // Masukkan data baru, urutkan berdasarkan waktu (kiri ke kanan), dan batasi sesuai limit
+        const updated = [...prev, newItem].sort(
+          (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+        return updated.slice(-limit);
+      });
+    }
+  }, [ph, moisture, lastUpdated, deviceId, limit]);
 
   const loadHistory = useCallback(async () => {
     if (!token || !deviceId) return;
