@@ -94,8 +94,33 @@ export default function DeviceCard({
             <div className="flex items-center gap-1.5 rounded-lg bg-sky-50 px-2.5 py-1.5">
               <MdOutlineWaterDrop size={13} className="text-sky-600 shrink-0" />
               <span className="text-xs font-medium text-sky-700 truncate max-w-[140px]">
-                {device.polybag.name}
-                {device.polybag.size ? ` · ${device.polybag.size}` : ""}
+                {(() => {
+                  const pb = device.polybag;
+                  const name = pb.polybagType?.name || pb.name;
+                  const volume = pb.soilVolumeLiter;
+                  const diameter = pb.polybagType?.diameter;
+                  const height = pb.polybagType?.height;
+                  
+                  const nameStr = name && name !== "undefined" ? name : "";
+                  
+                  let sizeStr = "";
+                  if (volume) {
+                    sizeStr = `${volume}L`;
+                  } else if (diameter && height) {
+                    sizeStr = `${diameter}x${height} cm`;
+                  } else if (pb.size && pb.size !== "undefined") {
+                    sizeStr = pb.size;
+                  }
+
+                  if (nameStr && sizeStr) {
+                    return `${nameStr} · ${sizeStr}`;
+                  } else if (nameStr) {
+                    return nameStr;
+                  } else if (sizeStr) {
+                    return sizeStr;
+                  }
+                  return "Polybag";
+                })()}
               </span>
             </div>
           )}

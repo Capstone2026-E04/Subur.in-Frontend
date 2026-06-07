@@ -47,8 +47,6 @@ function DashboardSkeleton() {
   );
 }
 
-// ── Empty State (No Devices) ───────────────────────────────────────────────────
-
 function EmptyDashboardState() {
   const router = useRouter();
   return (
@@ -133,7 +131,6 @@ export default function DashboardPage() {
 
   const selectedDevice = devices.find((d) => d.id === selectedDeviceId) || devices[0] || null;
 
-  // Sambungkan ke real-time hook untuk mendapatkan telemetry sensor secara langsung
   const { ph, moisture, lastUpdated } = useSensorRealtime(selectedDevice?.id || "");
 
   const loadRecommendation = useCallback(async (silent = false) => {
@@ -149,13 +146,9 @@ export default function DashboardPage() {
     }
   }, [token, selectedDevice?.id]);
 
-  // Load awal rekomendasi ketika alat yang dipilih berubah
   useEffect(() => {
     loadRecommendation(false);
   }, [selectedDevice?.id, loadRecommendation]);
-
-  // Pemicu otomatis real-time: jika data sensor terupdate via SSE,
-  // ambil ulang rekomendasi fuzzy dari backend secara senyap (silent) di latar belakang
   useEffect(() => {
     if (lastUpdated) {
       loadRecommendation(true);
@@ -175,11 +168,33 @@ export default function DashboardPage() {
   }
 
   const plantName = selectedDevice.plant?.name ?? "Tanaman";
-  const polybagInfo = selectedDevice.polybag
-    ? `${selectedDevice.polybag.name}${
-        selectedDevice.polybag.size ? ` (${selectedDevice.polybag.size})` : ""
-      }`
-    : "Belum diatur";
+  const polybag = selectedDevice.polybag;
+  let polybagInfo = "Belum diatur";
+  if (polybag) {
+    const name = polybag.polybagType?.name || polybag.name;
+    const volume = polybag.soilVolumeLiter;
+    const diameter = polybag.polybagType?.diameter;
+    const height = polybag.polybagType?.height;
+    
+    const nameStr = name && name !== "undefined" ? name : "";
+    
+    let sizeStr = "";
+    if (volume) {
+      sizeStr = `${volume}L`;
+    } else if (diameter && height) {
+      sizeStr = `${diameter}x${height} cm`;
+    } else if (polybag.size && polybag.size !== "undefined") {
+      sizeStr = polybag.size;
+    }
+
+    if (nameStr && sizeStr) {
+      polybagInfo = `${nameStr} (${sizeStr})`;
+    } else if (nameStr) {
+      polybagInfo = nameStr;
+    } else if (sizeStr) {
+      polybagInfo = sizeStr;
+    }
+  }
 
   const stats = [
     {
@@ -243,7 +258,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* AI Fuzzy Recommendation Panel (Placed at the very top!) */}
       <div className="rounded-2xl bg-white border border-black/6 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-black/6 bg-gray-50">
           <div className="flex items-center gap-2">
@@ -278,7 +292,6 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Top Condition Card (Simplified: No code C1/C2/etc., No fuzzy index) */}
               <div className="flex items-center justify-start gap-8 p-4 rounded-xl bg-gray-50 border border-black/5">
                 <div>
                   <span className="text-xs text-gray-400 font-semibold block">pH Terukur</span>
@@ -295,88 +308,125 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* AI Recommendation Message (Highlighted) */}
-              <div className="space-y-2">
-                <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
-                  <MdGrass className="text-emerald-500" size={14} />
-                  Tindakan Perawatan yang Disarankan:
-                </span>
-                <p className="text-sm text-emerald-950 font-bold bg-emerald-50 border-l-4 border-emerald-500 rounded-r-xl p-4.5 shadow-sm leading-relaxed">
+              <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50/30 border border-emerald-500/20 p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-emerald-600 text-white shadow-sm shadow-emerald-600/10">
+                    <MdGrass size={14} />
+                    TINDAKAN PERAWATAN YANG DISARANKAN
+                  </span>
+                </div>
+                <p className="text-base sm:text-lg text-emerald-950 font-extrabold leading-relaxed">
                   {recommendation.actionText}
                 </p>
               </div>
 
-              {/* Action Badges / Dosage Instructions (Highlighted) */}
-              <div className="space-y-2.5">
-                <span className="text-xs font-bold text-violet-700 flex items-center gap-1">
-                  <MdScience className="text-violet-500" size={14} />
-                  Panduan Dosis Pengairan & Nutrisi:
-                </span>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-extrabold bg-violet-650 text-white shadow-sm shadow-violet-650/10">
+                    <MdScience size={14} />
+                    PANDUAN DOSIS PENGAIRAN & NUTRISI
+                  </span>
+                </div>
 
-                {/* If everything is optimal */}
                 {recommendation.waterVolumeLiter === 0 &&
                 recommendation.limeDosageGram === 0 &&
                 recommendation.sulfurDosageGram === 0 &&
                 !recommendation.reduceWatering ? (
-                  <div className="flex items-start gap-3 rounded-xl bg-emerald-50 border border-emerald-200 p-4">
-                    <MdCheckCircleOutline className="text-emerald-500 shrink-0 mt-0.5" size={18} />
+                  <div className="flex items-start gap-3 rounded-xl bg-emerald-50 border border-emerald-200/80 p-4">
+                    <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 shrink-0">
+                      <MdCheckCircleOutline size={20} />
+                    </div>
                     <div>
-                      <p className="text-xs font-bold text-emerald-800">Kondisi Sangat Baik</p>
-                      <p className="text-xs text-emerald-700/80 mt-0.5 leading-relaxed">
+                      <p className="text-xs font-extrabold text-emerald-900">Kondisi Sangat Baik</p>
+                      <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
                         Tingkat keasaman (pH) dan kelembapan tanah Anda saat ini sangat ideal untuk pertumbuhan optimal tanaman **{plantName}**. Teruskan pola penyiraman harian normal.
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {/* Water Dosage */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {recommendation.waterVolumeLiter > 0 && (
-                      <div className="flex items-start gap-3 rounded-xl bg-sky-50 border-l-4 border-sky-500 p-4 shadow-sm">
-                        <MdOpacity className="text-sky-500 shrink-0 mt-0.5 animate-bounce" size={18} />
-                        <div>
-                          <p className="text-xs font-bold text-sky-800">Saran Penyiraman</p>
-                          <p className="text-xs text-sky-700/80 mt-0.5 leading-relaxed">
-                            Siram media tanam dengan **{recommendation.waterVolumeLiter.toFixed(1)} Liter** air untuk mengembalikan kelembapan optimal.
-                          </p>
+                      <div className="flex items-center justify-between gap-3 rounded-xl bg-sky-50 border border-sky-200/85 p-4 shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded-lg bg-sky-100 text-sky-600 shrink-0">
+                            <MdOpacity size={20} />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-extrabold text-sky-900">Saran Penyiraman</p>
+                            <p className="text-xs text-sky-700 leading-relaxed">
+                              Siram media tanam untuk mengembalikan kelembapan.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-center justify-center bg-white border border-sky-200 rounded-lg px-3.5 py-2 shrink-0 shadow-sm min-w-[85px]">
+                          <span className="text-2xl font-extrabold text-sky-650 leading-none">
+                            {recommendation.waterVolumeLiter.toFixed(1)}
+                          </span>
+                          <span className="text-[10px] font-bold text-sky-500 uppercase tracking-wider mt-1.5">
+                            Liter Air
+                          </span>
                         </div>
                       </div>
                     )}
 
-                    {/* Reduce watering */}
                     {recommendation.reduceWatering && (
-                      <div className="flex items-start gap-3 rounded-xl bg-amber-50 border-l-4 border-amber-500 p-4 shadow-sm">
-                        <MdWarningAmber className="text-amber-500 shrink-0 mt-0.5" size={18} />
-                        <div>
-                          <p className="text-xs font-bold text-amber-800">Hentikan / Kurangi Penyiraman</p>
-                          <p className="text-xs text-amber-700/80 mt-0.5 leading-relaxed">
+                      <div className="flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-200/85 p-4 shadow-sm">
+                        <div className="p-2 rounded-lg bg-amber-100 text-amber-600 shrink-0">
+                          <MdWarningAmber size={20} />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs font-extrabold text-amber-900">Kurangi / Hentikan Penyiraman</p>
+                          <p className="text-xs text-amber-700 leading-relaxed">
                             Tanah terlalu basah. Hentikan penyiraman sementara waktu untuk menghindari pembusukan akar tanaman.
                           </p>
                         </div>
                       </div>
                     )}
 
-                    {/* Lime (Dolomit) Dosage */}
                     {recommendation.limeDosageGram > 0 && (
-                      <div className="flex items-start gap-3 rounded-xl bg-emerald-50 border-l-4 border-emerald-500 p-4 shadow-sm">
-                        <MdScience className="text-emerald-500 shrink-0 mt-0.5" size={18} />
-                        <div>
-                          <p className="text-xs font-bold text-emerald-800">Saran Pengapuran (Naikkan pH)</p>
-                          <p className="text-xs text-emerald-700/80 mt-0.5 leading-relaxed">
-                            Taburkan **{recommendation.limeDosageGram.toFixed(0)} Gram** Kapur Pertanian (Dolomit) secara merata untuk menetralkan tanah yang terlalu asam.
-                          </p>
+                      <div className="flex items-center justify-between gap-3 rounded-xl bg-emerald-50 border border-emerald-200/85 p-4 shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 shrink-0">
+                            <MdScience size={20} />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-extrabold text-emerald-900">Saran Pengapuran (Naikkan pH)</p>
+                            <p className="text-xs text-emerald-700 leading-relaxed">
+                              Taburkan Kapur (Dolomit) rata untuk menetralkan tanah asam.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-center justify-center bg-white border border-emerald-200 rounded-lg px-3.5 py-2 shrink-0 shadow-sm min-w-[85px]">
+                          <span className="text-2xl font-extrabold text-emerald-650 leading-none">
+                            {recommendation.limeDosageGram.toFixed(0)}
+                          </span>
+                          <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider mt-1.5">
+                            Gram Kapur
+                          </span>
                         </div>
                       </div>
                     )}
 
-                    {/* Sulfur Dosage */}
                     {recommendation.sulfurDosageGram > 0 && (
-                      <div className="flex items-start gap-3 rounded-xl bg-violet-50 border-l-4 border-violet-500 p-4 shadow-sm">
-                        <MdScience className="text-violet-500 shrink-0 mt-0.5" size={18} />
-                        <div>
-                          <p className="text-xs font-bold text-violet-800">Saran Pemberian Belerang (Turunkan pH)</p>
-                          <p className="text-xs text-violet-700/80 mt-0.5 leading-relaxed">
-                            Taburkan **{recommendation.sulfurDosageGram.toFixed(0)} Gram** bubuk belerang untuk menurunkan kadar basa dan menyeimbangkan media tanah.
-                          </p>
+                      <div className="flex items-center justify-between gap-3 rounded-xl bg-violet-50 border border-violet-200/85 p-4 shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded-lg bg-violet-100 text-violet-600 shrink-0">
+                            <MdScience size={20} />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-extrabold text-violet-900">Saran Pemberian Belerang</p>
+                            <p className="text-xs text-violet-700 leading-relaxed">
+                              Taburkan bubuk belerang rata untuk menyeimbangkan tanah basa.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-center justify-center bg-white border border-violet-200 rounded-lg px-3.5 py-2 shrink-0 shadow-sm min-w-[85px]">
+                          <span className="text-2xl font-extrabold text-violet-650 leading-none">
+                            {recommendation.sulfurDosageGram.toFixed(0)}
+                          </span>
+                          <span className="text-[10px] font-bold text-violet-500 uppercase tracking-wider mt-1.5">
+                            Gram Belerang
+                          </span>
                         </div>
                       </div>
                     )}

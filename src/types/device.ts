@@ -14,8 +14,15 @@ export interface RegisteredDevice {
   } | null;
   polybag?: {
     id: string;
-    name: string;
+    name?: string;
     size?: string;
+    soilVolumeLiter?: number;
+    polybagType?: {
+      id: string;
+      name: string;
+      diameter: number;
+      height: number;
+    };
   } | null;
 }
 
